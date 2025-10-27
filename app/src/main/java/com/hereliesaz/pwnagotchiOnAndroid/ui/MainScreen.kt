@@ -24,6 +24,7 @@ import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.HomeScreen
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.OpwngridScreenNav
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.PluginsScreenNav
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.SettingsScreenNav
+import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.MissingDependenciesScreen
 import com.hereliesaz.aznavrail.AzNavRail
 import com.hereliesaz.aznavrail.model.AzButtonShape
 
@@ -128,11 +129,20 @@ fun AppNavHost(
         startDestination = Screen.Home.route
     ) {
         composable(Screen.Home.route) {
-            HomeScreen(
-                pwnagotchiUiState = pwnagotchiUiState,
-                onReconnect = onReconnect,
-                onDisconnect = onDisconnect
-            )
+            when (pwnagotchiUiState) {
+                is PwnagotchiUiState.MissingDependencies ->
+                    MissingDependenciesScreen(
+                        hasBettercap = pwnagotchiUiState.hasBettercap,
+                        hasBusybox = pwnagotchiUiState.hasBusybox,
+                        onRetry = onReconnect
+                    )
+                else ->
+                    HomeScreen(
+                        pwnagotchiUiState = pwnagotchiUiState,
+                        onReconnect = onReconnect,
+                        onDisconnect = onDisconnect
+                    )
+            }
         }
         composable(Screen.Plugins.route) {
             PluginsScreenNav(pwnagotchiUiState, onTogglePlugin, onInstallPlugin)
