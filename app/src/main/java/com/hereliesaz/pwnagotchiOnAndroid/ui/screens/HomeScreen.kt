@@ -17,5 +17,8 @@ fun HomeScreen(
         )
         is PwnagotchiUiState.Disconnected -> DisconnectedScreen(pwnagotchiUiState.message, onReconnect)
         is PwnagotchiUiState.Error -> ErrorScreen(pwnagotchiUiState.message, onReconnect)
+        else -> {
+            // This branch should not be reached, as MissingDependencies is handled in MainScreen
+        }
     }
 }

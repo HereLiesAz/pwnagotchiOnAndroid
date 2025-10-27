@@ -67,8 +67,9 @@ class SettingsViewModelTest {
         val city = "testcity"
         val mode = PwnagotchiMode.LOCAL
         val theme = AppTheme.DARK
+        val selectedInterface = "wlan1"
 
-        viewModel.saveSettings(context, host, apiKey, city, mode, theme)
+        viewModel.saveSettings(context, host, apiKey, city, mode, theme, selectedInterface)
 
         // Advance the dispatcher to allow the save coroutine to run
         testDispatcher.scheduler.advanceUntilIdle()
@@ -78,6 +79,7 @@ class SettingsViewModelTest {
         verify(editor).putString("city", city)
         verify(editor).putString("mode", mode.name)
         verify(editor).putString("theme", theme.name)
+        verify(editor).putString("selected_interface", selectedInterface)
         verify(editor).apply()
     }
 
@@ -88,12 +90,14 @@ class SettingsViewModelTest {
         val city = "testcity"
         val mode = PwnagotchiMode.LOCAL
         val theme = AppTheme.LIGHT
+        val selectedInterface = "wlan0"
 
         whenever(sharedPreferences.getString("host", "")).thenReturn(host)
         whenever(sharedPreferences.getString("api_key", "")).thenReturn(apiKey)
         whenever(sharedPreferences.getString("city", "")).thenReturn(city)
         whenever(sharedPreferences.getString("mode", PwnagotchiMode.REMOTE.name)).thenReturn(mode.name)
         whenever(sharedPreferences.getString("theme", AppTheme.SYSTEM.name)).thenReturn(theme.name)
+        whenever(sharedPreferences.getString("selected_interface", "")).thenReturn(selectedInterface)
 
 
         viewModel = SettingsViewModel(context, localAgentManager)
@@ -107,5 +111,6 @@ class SettingsViewModelTest {
         assert(uiState.city == city)
         assert(uiState.mode == mode)
         assert(uiState.theme == theme)
+        assert(uiState.selectedInterface == selectedInterface)
     }
 }

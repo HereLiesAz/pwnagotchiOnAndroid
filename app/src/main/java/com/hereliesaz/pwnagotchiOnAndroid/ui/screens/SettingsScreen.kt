@@ -36,11 +36,14 @@ import com.hereliesaz.pwnagotchiOnAndroid.SettingsUiState
 
 import com.hereliesaz.pwnagotchiOnAndroid.PwnagotchiMode
 import androidx.compose.material3.RadioButton
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 
 @Composable
 fun SettingsScreen(
     uiState: SettingsUiState,
-    onSaveSettings: (String, String, String, PwnagotchiMode, AppTheme) -> Unit
+    onSaveSettings: (String, String, String, PwnagotchiMode, AppTheme, String) -> Unit
 ) {
     val context = LocalContext.current
     when (uiState) {
@@ -53,6 +56,9 @@ fun SettingsScreen(
             var city by remember { mutableStateOf(uiState.city) }
             var mode by remember { mutableStateOf(uiState.mode) }
             var theme by remember { mutableStateOf(uiState.theme) }
+            var selectedInterface by remember { mutableStateOf(uiState.selectedInterface) }
+            var expanded by remember { mutableStateOf(false) }
+
 
             Column(
                 modifier = Modifier
@@ -153,18 +159,40 @@ fun SettingsScreen(
                                 Text("Learn how to install Nexmon")
                             }
                         }
-                        Text("A pre-compiled bettercap binary for ARM64 is not available. You will need to compile it from source and place it in the app's internal storage.", style = MaterialTheme.typography.bodySmall)
-                        TextButton(onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.bettercap.org/installation/#compiling-from-source"))
-                            context.startActivity(intent)
-                        }) {
-                            Text("Bettercap compilation instructions")
+
+                        if(uiState.wirelessInterfaces.isNotEmpty()) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Wireless Interface:")
+                                Spacer(modifier = Modifier.weight(1f))
+                                Box {
+                                    Button(onClick = { expanded = true }) {
+                                        Text(selectedInterface.ifEmpty { "Select Interface" })
+                                    }
+                                    DropdownMenu(
+                                        expanded = expanded,
+                                        onDismissRequest = { expanded = false }
+                                    ) {
+                                        uiState.wirelessInterfaces.forEach { iface ->
+                                            DropdownMenuItem(
+                                                text = { Text(iface) },
+                                                onClick = {
+                                                    selectedInterface = iface
+                                                    expanded = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                                Button(onClick = { expanded = true }) {
+                                    Text(selectedInterface.ifEmpty { "Select Interface" })
+                                }
+                            }
                         }
                     }
                 }
 
                 Button(
-                    onClick = { onSaveSettings(host, apiKey, city, mode, theme) },
+                    onClick = { onSaveSettings(host, apiKey, city, mode, theme, selectedInterface) },
                     modifier = Modifier.align(Alignment.End)
                 ) {
                     Text("Save")
