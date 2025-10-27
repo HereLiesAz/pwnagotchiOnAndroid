@@ -18,18 +18,29 @@ class LocalPwnagotchiSource(
     override fun connect(uri: URI) {
         currentUri = uri
         serviceScope.launch {
+            _uiState.value = PwnagotchiUiState.Connecting("Checking dependencies...")
+            val (hasBettercap, hasBusybox) = localAgentManager.areBinariesInstalled()
+            if (!hasBettercap || !hasBusybox) {
+                _uiState.value = PwnagotchiUiState.MissingDependencies(hasBettercap, hasBusybox)
+                return@launch
+            }
+
+            val sharedPreferences = context.getSharedPreferences("pwnagotchi_prefs", Context.MODE_PRIVATE)
+            val selectedInterface = sharedPreferences.getString("selected_interface", "wlan0") ?: "wlan0"
+
+
             _uiState.value = PwnagotchiUiState.Connecting("Starting Local Agent...")
-            if (localAgentManager.enableMonitorMode()) {
+            if (localAgentManager.enableMonitorMode(selectedInterface)) {
                 // Give the system a moment to switch modes
                 delay(1000)
-                if (localAgentManager.startBettercap().isSuccess) {
+                if (localAgentManager.startBettercap(selectedInterface).isSuccess) {
                     // Give bettercap a moment to start its web UI
                     delay(5000)
                     webSocketClient = createWebSocketClient(uri)
                     webSocketClient?.connect()
                 } else {
                     _uiState.value = PwnagotchiUiState.Error("Failed to start bettercap")
-                    localAgentManager.disableMonitorMode() // Clean up
+                    localAgentManager.disableMonitorMode(selectedInterface) // Clean up
                 }
             } else {
                 _uiState.value = PwnagotchiUiState.Error("Failed to enable monitor mode")
@@ -40,8 +51,10 @@ class LocalPwnagotchiSource(
     override fun disconnect() {
         super.disconnect()
         serviceScope.launch {
+            val sharedPreferences = context.getSharedPreferences("pwnagotchi_prefs", Context.MODE_PRIVATE)
+            val selectedInterface = sharedPreferences.getString("selected_interface", "wlan0") ?: "wlan0"
             localAgentManager.stopBettercap()
-            localAgentManager.disableMonitorMode()
+            localAgentManager.disableMonitorMode(selectedInterface)
             _uiState.value = PwnagotchiUiState.Disconnected("Local Agent stopped")
         }
     }

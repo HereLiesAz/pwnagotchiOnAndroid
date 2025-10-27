@@ -28,6 +28,8 @@ class SettingsViewModel(context: Context, private val localAgentManager: LocalAg
             val mode = PwnagotchiMode.valueOf(modeString)
             val themeString = sharedPreferences.getString("theme", AppTheme.SYSTEM.name) ?: AppTheme.SYSTEM.name
             val theme = AppTheme.valueOf(themeString)
+            val wirelessInterfaces = localAgentManager.getWirelessInterfaces()
+            val selectedInterface = sharedPreferences.getString("selected_interface", "") ?: ""
 
 
             _uiState.value = SettingsUiState.Loaded(
@@ -37,12 +39,14 @@ class SettingsViewModel(context: Context, private val localAgentManager: LocalAg
                 apiKey = apiKey,
                 city = city,
                 mode = mode,
-                theme = theme
+                theme = theme,
+                wirelessInterfaces = wirelessInterfaces,
+                selectedInterface = selectedInterface
             )
         }
     }
 
-    fun saveSettings(context: Context, host: String, apiKey: String, city: String, mode: PwnagotchiMode, theme: AppTheme) {
+    fun saveSettings(context: Context, host: String, apiKey: String, city: String, mode: PwnagotchiMode, theme: AppTheme, selectedInterface: String) {
         viewModelScope.launch {
             val sharedPreferences = context.getSharedPreferences("pwnagotchi_prefs", Context.MODE_PRIVATE)
             with(sharedPreferences.edit()) {
@@ -51,6 +55,7 @@ class SettingsViewModel(context: Context, private val localAgentManager: LocalAg
                 putString("city", city)
                 putString("mode", mode.name)
                 putString("theme", theme.name)
+                putString("selected_interface", selectedInterface)
                 apply()
             }
         }
