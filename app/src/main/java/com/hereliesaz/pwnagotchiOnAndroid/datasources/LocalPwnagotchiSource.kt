@@ -60,6 +60,8 @@ class LocalPwnagotchiSource(
     override fun disconnect() {
         super.disconnect()
         serviceScope.launch {
+            val sharedPreferences = context.getSharedPreferences("pwnagotchi_prefs", Context.MODE_PRIVATE)
+            val selectedInterface = sharedPreferences.getString("selected_interface", "wlan0") ?: "wlan0"
             localAgentManager.stopBettercap()
             localAgentManager.disableMonitorMode(selectedInterface)
             _uiState.value = PwnagotchiUiState.Disconnected("Local Agent stopped")
