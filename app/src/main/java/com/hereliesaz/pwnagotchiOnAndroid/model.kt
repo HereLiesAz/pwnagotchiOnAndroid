@@ -58,6 +58,7 @@ sealed class PwnagotchiUiState {
     ) : PwnagotchiUiState()
     data class Error(val message: String) : PwnagotchiUiState()
     data class MissingDependencies(val hasBettercap: Boolean, val hasBusybox: Boolean) : PwnagotchiUiState()
+    data class NotRooted(val message: String) : PwnagotchiUiState()
 }
 
 @Serializable
