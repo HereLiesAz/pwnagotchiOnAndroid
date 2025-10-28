@@ -20,6 +20,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.Alignment
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PluginsScreen(
@@ -58,14 +63,24 @@ fun PluginsScreen(
                     .fillMaxWidth()
                     .padding(8.dp)
             )
-            when (selectedTab) {
-                0 -> {
-                    val filteredPlugins = plugins.filter { it.name.contains(searchQuery, ignoreCase = true) }
-                    InstalledPluginsScreen(plugins = filteredPlugins, onTogglePlugin = onTogglePlugin)
+
+            if (plugins.isEmpty() && communityPlugins.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
-                1 -> {
-                    val filteredCommunityPlugins = communityPlugins.filter { it.name.contains(searchQuery, ignoreCase = true) }
-                    DiscoverPluginsScreen(plugins = filteredCommunityPlugins, onInstallPlugin = onInstallPlugin)
+            } else {
+                when (selectedTab) {
+                    0 -> {
+                        val filteredPlugins = plugins.filter { it.name.contains(searchQuery, ignoreCase = true) }
+                        InstalledPluginsScreen(plugins = filteredPlugins, onTogglePlugin = onTogglePlugin)
+                    }
+                    1 -> {
+                        val filteredCommunityPlugins = communityPlugins.filter { it.name.contains(searchQuery, ignoreCase = true) }
+                        DiscoverPluginsScreen(plugins = filteredCommunityPlugins, onInstallPlugin = onInstallPlugin)
+                    }
                 }
             }
         }

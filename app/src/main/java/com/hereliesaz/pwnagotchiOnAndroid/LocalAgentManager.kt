@@ -4,8 +4,17 @@ import android.content.Context
 import com.topjohnwu.superuser.Shell
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 
 class LocalAgentManager(private val context: Context) {
+
+    private val bettercapPath = "bettercap"
+    private val busyboxPath = "busybox"
+
+    companion object {
+        private const val WLAN_INTERFACE_PREFIX = "wlan"
+    }
+
     fun isDeviceRooted(): Boolean {
         return Shell.rootAccess()
     }
@@ -15,37 +24,73 @@ class LocalAgentManager(private val context: Context) {
         return result.isSuccess && result.out.isNotEmpty()
     }
 
-    fun installBettercap() {
-        val bettercapFile = File(context.filesDir, "bettercap")
-        if (!bettercapFile.exists()) {
-            context.assets.open("bettercap").use { inputStream ->
-                FileOutputStream(bettercapFile).use { outputStream ->
-                    inputStream.copyTo(outputStream)
+    fun areBinariesInstalled(): Pair<Boolean, Boolean> {
+        val bettercapResult = Shell.su("which bettercap").exec()
+        val busyboxResult = Shell.su("which busybox").exec()
+        return Pair(bettercapResult.isSuccess, busyboxResult.isSuccess)
+    }
+
+    fun getWirelessInterfaces(): List<String> {
+        val result = Shell.su("$busyboxPath ifconfig -a").exec()
+        if (result.isSuccess) {
+            return result.out
+                .mapNotNull { line ->
+                    if (line.startsWith(WLAN_INTERFACE_PREFIX)) {
+                        line.split(" ").firstOrNull()
+                    } else {
+                        null
+                    }
                 }
-            }
-            Shell.cmd("chmod +x ${bettercapFile.absolutePath}").exec()
+                .filter { it.isNotEmpty() }
+                .distinct()
         }
+        return emptyList()
     }
 
-    fun enableMonitorMode(): Boolean {
-        Shell.su("svc wifi disable").exec()
-        val result = Shell.su("nexutil -m2").exec()
-        return result.isSuccess
+    private data class Command(val execute: String, val rollback: String)
+
+    private fun executeCommands(commands: List<Command>): Boolean {
+        val successfulCommands = mutableListOf<Command>()
+        for (command in commands) {
+            if (Shell.su(command.execute).exec().isSuccess) {
+                successfulCommands.add(command)
+            } else {
+                // Rollback in reverse order
+                successfulCommands.reversed().forEach { Shell.su(it.rollback).exec() }
+                return false
+            }
+        }
+        return true
     }
 
-    fun disableMonitorMode(): Boolean {
-        Shell.su("nexutil -m0").exec()
-        val result = Shell.su("svc wifi enable").exec()
-        return result.isSuccess
+    fun enableMonitorMode(iface: String): Boolean {
+        val commands = listOf(
+            Command("svc wifi disable", "svc wifi enable"),
+            Command("$busyboxPath ifconfig $iface down", "$busyboxPath ifconfig $iface up"),
+            Command("nexutil -m2", "nexutil -m0"),
+            Command("$busyboxPath ifconfig $iface up", "$busyboxPath ifconfig $iface down")
+        )
+        return executeCommands(commands)
     }
 
-    fun startBettercap(): Shell.Result {
-        val bettercapFile = File(context.filesDir, "bettercap")
-        return Shell.su("${bettercapFile.absolutePath} -iface wlan0").exec()
+    fun disableMonitorMode(iface: String): Boolean {
+        val commands = listOf(
+            Command("nexutil -m0", "nexutil -m2"),
+            Command("$busyboxPath ifconfig $iface down", "$busyboxPath ifconfig $iface up"),
+            Command("$busyboxPath ifconfig $iface up", "$busyboxPath ifconfig $iface down"),
+            Command("svc wifi enable", "svc wifi disable")
+        )
+        return executeCommands(commands)
     }
 
-    fun stopBettercap() {
-        Shell.su("killall bettercap").exec()
+    fun startBettercap(iface: String): Shell.Result {
+        val logFile = File(context.cacheDir, "bettercap.log").absolutePath
+        val command = "$bettercapPath -iface $iface -debug -api-addr 127.0.0.1:8080 > $logFile 2>&1 &"
+        return Shell.su(command).exec()
+    }
+
+    fun stopBettercap(): Shell.Result {
+        return Shell.su("$busyboxPath pkill bettercap").exec()
     }
 
     fun configureUsbNetwork(): Shell.Result {

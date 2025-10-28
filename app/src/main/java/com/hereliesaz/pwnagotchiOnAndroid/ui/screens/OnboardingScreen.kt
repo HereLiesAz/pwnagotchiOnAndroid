@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalPermissionsApi::class)
 @Composable
-fun OnboardingScreen(onOnboardingComplete: () -> Unit) {
+fun OnboardingScreen(onOnboardingComplete: () -> Unit, onNavigateToSettings: () -> Unit) {
     val pagerState = rememberPagerState(pageCount = { 4 })
     val scope = rememberCoroutineScope()
     val postNotificationPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -87,6 +87,10 @@ fun OnboardingScreen(onOnboardingComplete: () -> Unit) {
                             Text("Notification permission granted!")
                         }
                     }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = onNavigateToSettings) {
+                        Text("Go to Settings")
+                    }
                 }
             }
         }
@@ -125,7 +129,7 @@ fun OnboardingScreen(onOnboardingComplete: () -> Unit) {
                 }
             }
 
-            // Next/Finish Button
+            // Next/Get Started Button
             Button(onClick = {
                 if (pagerState.currentPage < pagerState.pageCount - 1) {
                     scope.launch {
@@ -135,7 +139,7 @@ fun OnboardingScreen(onOnboardingComplete: () -> Unit) {
                     onOnboardingComplete()
                 }
             }) {
-                Text(if (pagerState.currentPage < pagerState.pageCount - 1) "Next" else "Finish")
+                Text(if (pagerState.currentPage < pagerState.pageCount - 1) "Next" else "Get Started")
             }
         }
     }
