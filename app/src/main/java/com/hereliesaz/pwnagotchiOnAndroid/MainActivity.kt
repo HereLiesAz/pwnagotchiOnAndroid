@@ -93,16 +93,17 @@ class MainActivity : ComponentActivity() {
                 }
             ) {
                 if (showOnboarding) {
+                    val completeOnboarding = {
+                        sharedPreferences.edit { putBoolean("onboarding_complete", true) }
+                        showOnboarding = false
+                    }
                     OnboardingScreen(
-                        onOnboardingComplete = {
-                            sharedPreferences.edit { putBoolean("onboarding_complete", true) }
-                            showOnboarding = false
-                        },
+                        onOnboardingComplete = completeOnboarding,
                         onNavigateToSettings = {
+                            completeOnboarding()
                             // This will be handled by the NavController in MainScreen
-                            // For now, we can just complete onboarding
-                            sharedPreferences.edit { putBoolean("onboarding_complete", true) }
-                            showOnboarding = false
+                            // We will navigate to settings after the onboarding is complete
+                            pwnagotchiViewModel.navigateToSettings()
                         }
                     )
                 } else {
@@ -114,7 +115,11 @@ class MainActivity : ComponentActivity() {
                         onInstallPlugin = { plugin -> pwnagotchiService?.installCommunityPlugin(plugin) },
                         onReconnect = { pwnagotchiService?.reconnect() },
                         onFetchLeaderboard = { pwnagotchiViewModel.fetchLeaderboard() },
-                        onErrorDismiss = { pwnagotchiViewModel.clearError() }
+                        onErrorDismiss = { pwnagotchiViewModel.clearError() },
+                        navigateToSettings = {
+                            pwnagotchiViewModel.onSettingsNavigated()
+                        },
+                        pwnagotchiViewModel = pwnagotchiViewModel
                     )
                 }
             }

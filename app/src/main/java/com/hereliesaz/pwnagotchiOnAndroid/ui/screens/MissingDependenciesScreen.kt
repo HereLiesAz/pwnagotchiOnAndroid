@@ -43,7 +43,7 @@ fun MissingDependenciesScreen(
         if (!hasBusybox) {
             DependencyInstallationGuide(
                 title = "Busybox Not Found",
-                instructions = busyboxInstructions
+                instructions = com.hereliesaz.pwnagotchiOnAndroid.utils.busyboxInstructions
             )
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -51,7 +51,7 @@ fun MissingDependenciesScreen(
         if (!hasBettercap) {
             DependencyInstallationGuide(
                 title = "Bettercap Not Found",
-                instructions = bettercapInstructions
+                instructions = com.hereliesaz.pwnagotchiOnAndroid.utils.bettercapInstructions
             )
             Spacer(modifier = Modifier.height(16.dp))
         }

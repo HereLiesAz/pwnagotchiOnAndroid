@@ -47,47 +47,40 @@ class LocalAgentManager(private val context: Context) {
         return emptyList()
     }
 
-    fun enableMonitorMode(iface: String): Boolean {
-        if (!Shell.su("svc wifi disable").exec().isSuccess) {
-            return false
-        }
-        if (!Shell.su("$busyboxPath ifconfig $iface down").exec().isSuccess) {
-            Shell.su("svc wifi enable").exec() // Revert
-            return false
-        }
-        if (!Shell.su("nexutil -m2").exec().isSuccess) {
-            Shell.su("$busyboxPath ifconfig $iface up").exec() // Revert
-            Shell.su("svc wifi enable").exec() // Revert
-            return false
-        }
-        if (!Shell.su("$busyboxPath ifconfig $iface up").exec().isSuccess) {
-            Shell.su("nexutil -m0").exec() // Revert
-            Shell.su("$busyboxPath ifconfig $iface down").exec() // Revert
-            Shell.su("svc wifi enable").exec() // Revert
-            return false
+    private data class Command(val execute: String, val rollback: String)
+
+    private fun executeCommands(commands: List<Command>): Boolean {
+        val successfulCommands = mutableListOf<Command>()
+        for (command in commands) {
+            if (Shell.su(command.execute).exec().isSuccess) {
+                successfulCommands.add(command)
+            } else {
+                // Rollback in reverse order
+                successfulCommands.reversed().forEach { Shell.su(it.rollback).exec() }
+                return false
+            }
         }
         return true
     }
 
+    fun enableMonitorMode(iface: String): Boolean {
+        val commands = listOf(
+            Command("svc wifi disable", "svc wifi enable"),
+            Command("$busyboxPath ifconfig $iface down", "$busyboxPath ifconfig $iface up"),
+            Command("nexutil -m2", "nexutil -m0"),
+            Command("$busyboxPath ifconfig $iface up", "$busyboxPath ifconfig $iface down")
+        )
+        return executeCommands(commands)
+    }
+
     fun disableMonitorMode(iface: String): Boolean {
-        if (!Shell.su("nexutil -m0").exec().isSuccess) {
-            return false
-        }
-        if (!Shell.su("$busyboxPath ifconfig $iface down").exec().isSuccess) {
-            Shell.su("nexutil -m2").exec() // Revert
-            return false
-        }
-        if (!Shell.su("$busyboxPath ifconfig $iface up").exec().isSuccess) {
-            Shell.su("$busyboxPath ifconfig $iface down").exec() // Revert
-            Shell.su("nexutil -m2").exec() // Revert
-            return false
-        }
-        if (!Shell.su("svc wifi enable").exec().isSuccess) {
-            // Attempt to revert, but this is the last step so it's less critical
-            Shell.su("svc wifi disable").exec()
-            return false
-        }
-        return true
+        val commands = listOf(
+            Command("nexutil -m0", "nexutil -m2"),
+            Command("$busyboxPath ifconfig $iface down", "$busyboxPath ifconfig $iface up"),
+            Command("$busyboxPath ifconfig $iface up", "$busyboxPath ifconfig $iface down"),
+            Command("svc wifi enable", "svc wifi disable")
+        )
+        return executeCommands(commands)
     }
 
     fun startBettercap(iface: String): Shell.Result {
