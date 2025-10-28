@@ -57,6 +57,7 @@ sealed class PwnagotchiUiState {
         val communityPlugins: List<CommunityPlugin> = emptyList()
     ) : PwnagotchiUiState()
     data class Error(val message: String) : PwnagotchiUiState()
+    data class MissingDependencies(val hasBettercap: Boolean, val hasBusybox: Boolean) : PwnagotchiUiState()
 }
 
 @Serializable
@@ -101,6 +102,8 @@ sealed class SettingsUiState {
         val apiKey: String,
         val city: String,
         val mode: PwnagotchiMode,
-        val theme: AppTheme
+        val theme: AppTheme,
+        val wirelessInterfaces: List<String> = emptyList(),
+        val selectedInterface: String = ""
     ) : SettingsUiState()
 }
