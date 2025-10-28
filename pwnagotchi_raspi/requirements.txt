@@ -1,6 +1,1 @@
 websockets
-asyncio
-subprocess
-ssl
-os
-logging
