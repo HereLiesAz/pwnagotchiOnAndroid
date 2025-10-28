@@ -22,7 +22,13 @@ In this mode, the app aims to turn a compatible, rooted Android device *into* a 
 ### 3. Hybrid Mode
 This mode provides a powerful alternative for users whose Android devices do not have a Nexmon-compatible Wi-Fi chipset but who still desire a portable, phone-driven experience. In this hybrid architecture, the Android phone acts as the "brain" and user interface, while a connected Raspberry Pi serves as a dedicated, headless wireless peripheral responsible for all hardware-level network interaction.
 
-**This is a work in progress and is not yet fully functional in any mode.**
+## Requirements for Standalone Mode
+
+To use the Standalone Mode, your Android device must meet the following requirements:
+
+- **Root Access:** The application requires superuser permissions to run the necessary networking tools.
+- **Busybox:** The `busybox` binary must be installed on your device. The recommended way to install it is through a Magisk module.
+- **Bettercap:** The `bettercap` binary must be installed. Please refer to the in-app instructions for guidance on how to install it.
 
 <p align="center">
   <small>Join the project community on our server!</small>

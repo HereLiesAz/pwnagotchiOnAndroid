@@ -34,4 +34,8 @@ class PwnagotchiViewModel : ViewModel() {
     fun clearError() {
         _errorFlow.value = null
     }
+
+    fun setUiState(state: PwnagotchiUiState) {
+        _uiState.value = state
+    }
 }

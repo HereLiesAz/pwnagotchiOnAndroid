@@ -22,6 +22,7 @@ import androidx.core.content.edit
 import com.hereliesaz.pwnagotchiOnAndroid.ui.MainScreen
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.OnboardingScreen
 import com.hereliesaz.pwnagotchiOnAndroid.ui.theme.PwnagotchiOnAndroidTheme
+import com.hereliesaz.pwnagotchiOnAndroid.LocalAgentManager
 
 class MainActivity : ComponentActivity() {
     private var pwnagotchiService: PwnagotchiService? = null
@@ -55,6 +56,16 @@ class MainActivity : ComponentActivity() {
             val sharedPreferences = getSharedPreferences("pwnagotchi_prefs", Context.MODE_PRIVATE)
             var showOnboarding by remember { mutableStateOf(!sharedPreferences.getBoolean("onboarding_complete", false)) }
 
+            val localAgentManager = LocalAgentManager(this)
+            val isRooted = localAgentManager.isDeviceRooted()
+            val modeString = sharedPreferences.getString("mode", PwnagotchiMode.REMOTE.name) ?: PwnagotchiMode.REMOTE.name
+            val currentMode = PwnagotchiMode.valueOf(modeString)
+
+            if (!isRooted && (currentMode == PwnagotchiMode.LOCAL || currentMode == PwnagotchiMode.HYBRID)) {
+                pwnagotchiViewModel.setUiState(PwnagotchiUiState.NotRooted("Standalone and Hybrid modes require root access. Please switch to Remote mode."))
+                sharedPreferences.edit { putString("mode", PwnagotchiMode.REMOTE.name) }
+            }
+
             val themeString = sharedPreferences.getString("theme", AppTheme.SYSTEM.name) ?: AppTheme.SYSTEM.name
             var currentTheme by remember { mutableStateOf(AppTheme.valueOf(themeString)) }
 
@@ -82,10 +93,18 @@ class MainActivity : ComponentActivity() {
                 }
             ) {
                 if (showOnboarding) {
-                    OnboardingScreen {
-                        sharedPreferences.edit { putBoolean("onboarding_complete", true) }
-                        showOnboarding = false
-                    }
+                    OnboardingScreen(
+                        onOnboardingComplete = {
+                            sharedPreferences.edit { putBoolean("onboarding_complete", true) }
+                            showOnboarding = false
+                        },
+                        onNavigateToSettings = {
+                            // This will be handled by the NavController in MainScreen
+                            // For now, we can just complete onboarding
+                            sharedPreferences.edit { putBoolean("onboarding_complete", true) }
+                            showOnboarding = false
+                        }
+                    )
                 } else {
                     MainScreen(
                         pwnagotchiUiState = pwnagotchiUiState,
