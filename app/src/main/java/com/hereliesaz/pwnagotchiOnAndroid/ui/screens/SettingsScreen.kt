@@ -183,9 +183,6 @@ fun SettingsScreen(
                                         }
                                     }
                                 }
-                                Button(onClick = { expanded = true }) {
-                                    Text(selectedInterface.ifEmpty { "Select Interface" })
-                                }
                             }
                         }
                     }

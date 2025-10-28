@@ -28,18 +28,7 @@ To use the Standalone Mode, your Android device must meet the following requirem
 
 - **Root Access:** The application requires superuser permissions to run the necessary networking tools.
 - **Busybox:** The `busybox` binary must be installed on your device. The recommended way to install it is through a Magisk module.
-- **Bettercap:** The `bettercap` binary must be installed. You can install it by running the following commands in Termux:
-
-```bash
-apt update
-termux-setup-storage
-pkg install root-repo
-pkg install golang git libpcap libusb
-pkg install pkg-config
-pkg install tsu
-go install github.com/bettercap/bettercap@latest && cd $HOME/go/bin
-sudo ./bettercap
-```
+- **Bettercap:** The `bettercap` binary must be installed. Please refer to the in-app instructions for guidance on how to install it.
 
 <p align="center">
   <small>Join the project community on our server!</small>

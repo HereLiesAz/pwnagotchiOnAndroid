@@ -15,6 +15,16 @@ class LocalPwnagotchiSource(
 
     private val localAgentManager = LocalAgentManager(context)
 
+    companion object {
+        private const val DEFAULT_INTERFACE = "wlan0"
+    }
+
+    private val selectedInterface: String
+        get() {
+            val sharedPreferences = context.getSharedPreferences("pwnagotchi_prefs", Context.MODE_PRIVATE)
+            return sharedPreferences.getString("selected_interface", DEFAULT_INTERFACE) ?: DEFAULT_INTERFACE
+        }
+
     override fun connect(uri: URI) {
         currentUri = uri
         serviceScope.launch {
@@ -24,10 +34,6 @@ class LocalPwnagotchiSource(
                 _uiState.value = PwnagotchiUiState.MissingDependencies(hasBettercap, hasBusybox)
                 return@launch
             }
-
-            val sharedPreferences = context.getSharedPreferences("pwnagotchi_prefs", Context.MODE_PRIVATE)
-            val selectedInterface = sharedPreferences.getString("selected_interface", "wlan0") ?: "wlan0"
-
 
             _uiState.value = PwnagotchiUiState.Connecting("Starting Local Agent...")
             if (localAgentManager.enableMonitorMode(selectedInterface)) {

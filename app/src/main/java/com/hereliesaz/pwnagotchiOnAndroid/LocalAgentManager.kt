@@ -48,19 +48,46 @@ class LocalAgentManager(private val context: Context) {
     }
 
     fun enableMonitorMode(iface: String): Boolean {
-        Shell.su("svc wifi disable").exec()
-        Shell.su("$busyboxPath ifconfig $iface down").exec()
-        val result = Shell.su("nexutil -m2").exec()
-        Shell.su("$busyboxPath ifconfig $iface up").exec()
-        return result.isSuccess
+        if (!Shell.su("svc wifi disable").exec().isSuccess) {
+            return false
+        }
+        if (!Shell.su("$busyboxPath ifconfig $iface down").exec().isSuccess) {
+            Shell.su("svc wifi enable").exec() // Revert
+            return false
+        }
+        if (!Shell.su("nexutil -m2").exec().isSuccess) {
+            Shell.su("$busyboxPath ifconfig $iface up").exec() // Revert
+            Shell.su("svc wifi enable").exec() // Revert
+            return false
+        }
+        if (!Shell.su("$busyboxPath ifconfig $iface up").exec().isSuccess) {
+            Shell.su("nexutil -m0").exec() // Revert
+            Shell.su("$busyboxPath ifconfig $iface down").exec() // Revert
+            Shell.su("svc wifi enable").exec() // Revert
+            return false
+        }
+        return true
     }
 
     fun disableMonitorMode(iface: String): Boolean {
-        Shell.su("nexutil -m0").exec()
-        Shell.su("$busyboxPath ifconfig $iface down").exec()
-        Shell.su("$busyboxPath ifconfig $iface up").exec()
-        val result = Shell.su("svc wifi enable").exec()
-        return result.isSuccess
+        if (!Shell.su("nexutil -m0").exec().isSuccess) {
+            return false
+        }
+        if (!Shell.su("$busyboxPath ifconfig $iface down").exec().isSuccess) {
+            Shell.su("nexutil -m2").exec() // Revert
+            return false
+        }
+        if (!Shell.su("$busyboxPath ifconfig $iface up").exec().isSuccess) {
+            Shell.su("$busyboxPath ifconfig $iface down").exec() // Revert
+            Shell.su("nexutil -m2").exec() // Revert
+            return false
+        }
+        if (!Shell.su("svc wifi enable").exec().isSuccess) {
+            // Attempt to revert, but this is the last step so it's less critical
+            Shell.su("svc wifi disable").exec()
+            return false
+        }
+        return true
     }
 
     fun startBettercap(iface: String): Shell.Result {
