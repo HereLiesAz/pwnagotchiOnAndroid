@@ -30,6 +30,14 @@ class LocalAgentManager(private val context: Context) {
         return result.isSuccess && result.out.isNotEmpty()
     }
 
+    fun installNexmon(): Boolean {
+        val commands = listOf(
+            Command("apt-get update", "echo 'apt-get update failed'"),
+            Command("apt-get install -y nexmon", "echo 'nexmon installation failed'")
+        )
+        return executeCommands(commands)
+    }
+
     fun areBinariesInstalled(): Pair<Boolean, Boolean> {
         val bettercapResult = Shell.cmd("which bettercap").exec()
         val busyboxResult = Shell.cmd("which busybox").exec()
