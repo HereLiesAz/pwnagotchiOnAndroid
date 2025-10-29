@@ -31,7 +31,22 @@ class PwnagotchiViewModel : ViewModel() {
         pwnagotchiService?.fetchLeaderboard()
     }
 
+    private val _navigateToSettings = MutableStateFlow(false)
+    val navigateToSettings: StateFlow<Boolean> = _navigateToSettings
+
     fun clearError() {
         _errorFlow.value = null
+    }
+
+    fun setUiState(state: PwnagotchiUiState) {
+        _uiState.value = state
+    }
+
+    fun navigateToSettings() {
+        _navigateToSettings.value = true
+    }
+
+    fun onSettingsNavigated() {
+        _navigateToSettings.value = false
     }
 }

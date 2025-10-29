@@ -18,7 +18,7 @@ fun SettingsScreenNav(
     val settingsViewModel: SettingsViewModel = viewModel(factory = SettingsViewModelFactory(context))
     val uiState by settingsViewModel.uiState.collectAsState()
 
-    SettingsScreen(uiState) { host, apiKey, city, mode, theme ->
-        settingsViewModel.saveSettings(context, host, apiKey, city, mode, theme)
+    SettingsScreen(uiState) { host, apiKey, city, mode, theme, selectedInterface ->
+        settingsViewModel.saveSettings(context, host, apiKey, city, mode, theme, selectedInterface)
     }
 }
