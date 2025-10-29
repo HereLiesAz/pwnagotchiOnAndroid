@@ -13,20 +13,24 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    host: String,
-    apiKey: String,
-    onSave: (String, String, String) -> Unit
+    settingsViewModel: SettingsViewModel
 ) {
     val context = LocalContext.current
-    val sharedPreferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
-    val savedTheme = sharedPreferences.getString("theme", "System") ?: "System"
-    val localAgentManager = remember { LocalAgentManager(context) }
+    val uiState by settingsViewModel.uiState.collectAsState()
 
-    var hostState by remember { mutableStateOf(host) }
-    var apiKeyState by remember { mutableStateOf(apiKey) }
-    var theme by remember { mutableStateOf(savedTheme) }
-    val isRooted by remember { mutableStateOf(localAgentManager.isDeviceRooted()) }
-    val hasNexmon by remember { mutableStateOf(localAgentManager.hasNexmon()) }
+    when (val state = uiState) {
+        is SettingsUiState.Loading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+        is SettingsUiState.Loaded -> {
+            var hostState by remember { mutableStateOf(state.host) }
+            var apiKeyState by remember { mutableStateOf(state.apiKey) }
+            var cityState by remember { mutableStateOf(state.city) }
+            var modeState by remember { mutableStateOf(state.mode) }
+            var themeState by remember { mutableStateOf(state.theme) }
+            var selectedInterfaceState by remember { mutableStateOf(state.selectedInterface) }
 
     Column(
         modifier = Modifier
@@ -65,13 +69,13 @@ fun SettingsScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Rooted:")
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (isRooted) "Yes" else "No")
+                    Text(if (state.isRooted) "Yes" else "No")
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Nexmon Detected:")
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (hasNexmon) "Yes" else "No")
+                    Text(if (state.hasNexmon) "Yes" else "No")
                 }
             }
         }
@@ -83,18 +87,12 @@ fun SettingsScreen(
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(stringResource(id = R.string.theme), style = MaterialTheme.typography.titleMedium)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(selected = theme == "System", onClick = { theme = "System" })
+                    RadioButton(selected = themeState == AppTheme.SYSTEM, onClick = { themeState = AppTheme.SYSTEM })
                     Text(stringResource(id = R.string.system))
-                    RadioButton(selected = theme == "Light", onClick = { theme = "Light" })
+                    RadioButton(selected = themeState == AppTheme.LIGHT, onClick = { themeState = AppTheme.LIGHT })
                     Text(stringResource(id = R.string.light))
-                    RadioButton(selected = theme == "Dark", onClick = { theme = "Dark" })
+                    RadioButton(selected = themeState == AppTheme.DARK, onClick = { themeState = AppTheme.DARK })
                     Text(stringResource(id = R.string.dark))
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = {
-                    // TODO: Implement custom theme loading
-                }) {
-                    Text(stringResource(id = R.string.select_custom_theme))
                 }
             }
         }
@@ -102,10 +100,11 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = {
-            sharedPreferences.edit().putString("theme", theme).apply()
-            onSave(hostState, apiKeyState, theme)
+            settingsViewModel.saveSettings(context, hostState, apiKeyState, cityState, modeState, themeState, selectedInterfaceState)
         }) {
             Text(stringResource(id = R.string.save))
         }
+    }
+    }
     }
 }

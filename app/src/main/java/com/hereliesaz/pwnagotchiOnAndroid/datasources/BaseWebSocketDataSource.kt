@@ -70,10 +70,12 @@ abstract class BaseWebSocketDataSource(
     protected fun createWebSocketClient(uri: URI): WebSocketClient {
         return object : WebSocketClient(uri) {
             override fun onOpen(handshakedata: ServerHandshake?) {
-                _uiState.value = PwnagotchiUiState.Connected()
-                service.updateCustomNotification(context.getString(R.string.status_connected_to_pwnagotchi), "Ready to pwn!")
-                listPlugins()
-                getCommunityPlugins()
+                serviceScope.launch {
+                    _uiState.value = PwnagotchiUiState.Connected()
+                    service.updateCustomNotification(context.getString(R.string.status_connected_to_pwnagotchi), "Ready to pwn!")
+                    listPlugins()
+                    getCommunityPlugins()
+                }
             }
 
             override fun onMessage(message: String?) {

@@ -29,6 +29,7 @@ class PwnagotchiService : Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + Job())
     private var currentMode = PwnagotchiMode.REMOTE // Default to remote
+    private lateinit var hostDiscovery: HostDiscovery
 
     inner class LocalBinder : Binder() {
         fun getService(): PwnagotchiService = this@PwnagotchiService
@@ -40,6 +41,14 @@ class PwnagotchiService : Service() {
         val modeString = sharedPreferences.getString("mode", PwnagotchiMode.REMOTE.name) ?: PwnagotchiMode.REMOTE.name
         currentMode = PwnagotchiMode.valueOf(modeString)
         dataSource = createDataSource()
+        hostDiscovery = HostDiscovery(this) { host ->
+            val sharedPreferences = getSharedPreferences("pwnagotchi_prefs", Context.MODE_PRIVATE)
+            with(sharedPreferences.edit()) {
+                putString("host", host)
+                apply()
+            }
+            connect(URI("wss://$host:8765"))
+        }
     }
 
     override fun onBind(intent: Intent): IBinder {
@@ -61,6 +70,8 @@ class PwnagotchiService : Service() {
                         PwnagotchiMode.REMOTE, PwnagotchiMode.HYBRID -> connect(URI("wss://$host:8765"))
                         PwnagotchiMode.LOCAL -> connect(URI("ws://127.0.0.1:8080/api/events"))
                     }
+                } else {
+                    hostDiscovery.startDiscovery()
                 }
             }
         }
@@ -69,6 +80,9 @@ class PwnagotchiService : Service() {
 
     fun connect(uri: URI) {
         dataSource.connect(uri)
+        listPlugins()
+        getCommunityPlugins()
+        fetchLeaderboard()
     }
 
     fun disconnect() {
@@ -119,6 +133,7 @@ class PwnagotchiService : Service() {
         super.onDestroy()
         serviceScope.cancel()
         dataSource.disconnect()
+        hostDiscovery.stopDiscovery()
     }
 
     private fun getFaceDrawable(face: String): Int {

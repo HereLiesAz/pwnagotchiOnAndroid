@@ -170,10 +170,7 @@ fun AppNavHost(
             OpwngridScreenNav(pwnagotchiUiState, onFetchLeaderboard)
         }
         composable(Screen.Settings.route) {
-             val settingsUiState by settingsViewModel.uiState.collectAsState()
-             SettingsScreen(uiState = settingsUiState, onSaveSettings = { host, apiKey, city, mode, theme, selectedInterface ->
-                 settingsViewModel.saveSettings(navController.context, host, apiKey, city, mode, theme, selectedInterface)
-             })
+            SettingsScreen(settingsViewModel = settingsViewModel)
         }
     }
 }

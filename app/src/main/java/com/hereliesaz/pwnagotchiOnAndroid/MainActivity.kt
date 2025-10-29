@@ -59,17 +59,25 @@ class MainActivity : ComponentActivity() {
             var showOnboarding by remember { mutableStateOf(!sharedPreferences.getBoolean("onboarding_complete", false)) }
 
             val localAgentManager = LocalAgentManager(this)
-            var isRooted by remember { mutableStateOf(localAgentManager.isDeviceRooted()) }
-            val modeString = sharedPreferences.getString("mode", PwnagotchiMode.REMOTE.name) ?: PwnagotchiMode.REMOTE.name
-            val currentMode = PwnagotchiMode.valueOf(modeString)
+            var isRooted by remember { mutableStateOf(false) } // Default to false, will be updated after check
 
-            if (!isRooted && (currentMode == PwnagotchiMode.LOCAL || currentMode == PwnagotchiMode.HYBRID)) {
-                pwnagotchiViewModel.setUiState(PwnagotchiUiState.NotRooted("Standalone and Hybrid modes require root access. Please switch to Remote mode."))
-                sharedPreferences.edit { putString("mode", PwnagotchiMode.REMOTE.name) }
-                localAgentManager.requestRootAccess { granted ->
-                    if (granted) {
-                        isRooted = true
-                        pwnagotchiViewModel.setUiState(PwnagotchiUiState.Connected())
+            // Request root access as soon as the app starts
+            localAgentManager.requestRootAccess { granted ->
+                isRooted = granted
+                if (granted) {
+                    if (!localAgentManager.hasNexmon()) {
+                        // Attempt to install nexmon if it's not present
+                        if (!localAgentManager.installNexmon()) {
+                            // Handle installation failure
+                            pwnagotchiViewModel.setUiState(PwnagotchiUiState.Error("Failed to install Nexmon. Please try installing it manually."))
+                        }
+                    }
+                } else {
+                    val modeString = sharedPreferences.getString("mode", PwnagotchiMode.REMOTE.name) ?: PwnagotchiMode.REMOTE.name
+                    val currentMode = PwnagotchiMode.valueOf(modeString)
+                    if (currentMode == PwnagotchiMode.LOCAL || currentMode == PwnagotchiMode.HYBRID) {
+                        pwnagotchiViewModel.setUiState(PwnagotchiUiState.NotRooted("Standalone and Hybrid modes require root access. Please switch to Remote mode."))
+                        sharedPreferences.edit { putString("mode", PwnagotchiMode.REMOTE.name) }
                     }
                 }
             }
