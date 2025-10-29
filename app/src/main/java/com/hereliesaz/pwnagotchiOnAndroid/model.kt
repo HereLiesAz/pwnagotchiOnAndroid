@@ -94,17 +94,3 @@ data class CommunityPluginData(val name: String, val description: String)
 @Serializable
 data class CommunityPluginListMessage(val type: String, val data: List<CommunityPluginData>)
 
-sealed class SettingsUiState {
-    object Loading : SettingsUiState()
-    data class Loaded(
-        val isRooted: Boolean,
-        val hasNexmon: Boolean,
-        val host: String,
-        val apiKey: String,
-        val city: String,
-        val mode: PwnagotchiMode,
-        val theme: AppTheme,
-        val wirelessInterfaces: List<String> = emptyList(),
-        val selectedInterface: String = ""
-    ) : SettingsUiState()
-}
