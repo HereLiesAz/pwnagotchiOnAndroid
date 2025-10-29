@@ -23,11 +23,13 @@ import com.hereliesaz.pwnagotchiOnAndroid.ui.MainScreen
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.OnboardingScreen
 import com.hereliesaz.pwnagotchiOnAndroid.ui.theme.PwnagotchiOnAndroidTheme
 import com.hereliesaz.pwnagotchiOnAndroid.LocalAgentManager
+import com.hereliesaz.pwnagotchiOnAndroid.SettingsViewModel
 
 class MainActivity : ComponentActivity() {
     private var pwnagotchiService: PwnagotchiService? = null
     private var isBound = false
     private val pwnagotchiViewModel: PwnagotchiViewModel by viewModels()
+    private val settingsViewModel: SettingsViewModel by viewModels()
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
@@ -125,7 +127,8 @@ class MainActivity : ComponentActivity() {
                         navigateToSettings = {
                             pwnagotchiViewModel.onSettingsNavigated()
                         },
-                        pwnagotchiViewModel = pwnagotchiViewModel
+                        pwnagotchiViewModel = pwnagotchiViewModel,
+                        settingsViewModel = settingsViewModel
                     )
                 }
             }

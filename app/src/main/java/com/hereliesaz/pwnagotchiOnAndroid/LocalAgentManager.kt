@@ -19,6 +19,12 @@ class LocalAgentManager(private val context: Context) {
         return Shell.rootAccess()
     }
 
+    fun requestRootAccess(callback: (Boolean) -> Unit) {
+        Shell.getShell { shell ->
+            callback(shell.isRoot)
+        }
+    }
+
     fun hasNexmon(): Boolean {
         val result = Shell.cmd("which nexutil").exec()
         return result.isSuccess && result.out.isNotEmpty()

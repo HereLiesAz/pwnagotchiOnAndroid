@@ -3,9 +3,26 @@ package com.hereliesaz.pwnagotchiOnAndroid
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.hereliesaz.pwnagotchiOnAndroid.PwnagotchiMode
+import com.hereliesaz.pwnagotchiOnAndroid.AppTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+
+sealed class SettingsUiState {
+    object Loading : SettingsUiState()
+    data class Loaded(
+        val isRooted: Boolean,
+        val hasNexmon: Boolean,
+        val host: String,
+        val apiKey: String,
+        val city: String,
+        val mode: PwnagotchiMode,
+        val theme: AppTheme,
+        val wirelessInterfaces: List<String>,
+        val selectedInterface: String
+    ) : SettingsUiState()
+}
 
 class SettingsViewModel(context: Context, private val localAgentManager: LocalAgentManager = LocalAgentManager(context)) : ViewModel() {
     private val _uiState = MutableStateFlow<SettingsUiState>(SettingsUiState.Loading)

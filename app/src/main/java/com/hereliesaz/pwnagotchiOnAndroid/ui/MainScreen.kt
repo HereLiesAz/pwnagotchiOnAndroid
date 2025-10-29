@@ -20,16 +20,17 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.hereliesaz.pwnagotchiOnAndroid.PwnagotchiUiState
 import androidx.compose.runtime.collectAsState
+import com.hereliesaz.pwnagotchiOnAndroid.SettingsViewModel
 import com.hereliesaz.pwnagotchiOnAndroid.ui.navigation.Screen
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.HomeScreen
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.OpwngridScreenNav
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.PluginsScreenNav
-import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.SettingsScreenNav
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.MissingDependenciesScreen
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.NotRootedScreen
 import com.hereliesaz.aznavrail.AzNavRail
 import com.hereliesaz.aznavrail.model.AzButtonShape
 import com.hereliesaz.pwnagotchiOnAndroid.PwnagotchiViewModel
+import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.SettingsScreen
 
 @Composable
 fun MainScreen(
@@ -42,7 +43,8 @@ fun MainScreen(
     onFetchLeaderboard: () -> Unit,
     onErrorDismiss: () -> Unit,
     navigateToSettings: () -> Unit,
-    pwnagotchiViewModel: PwnagotchiViewModel
+    pwnagotchiViewModel: PwnagotchiViewModel,
+    settingsViewModel: SettingsViewModel
 ) {
     val navController = rememberNavController()
     val items = listOf(
@@ -92,16 +94,10 @@ fun MainScreen(
                         color = if (currentRoute == screen.route) selectedColor else unselectedColor,
                         onClick = {
                             navController.navigate(screen.route) {
-                                // Pop up to the start destination of the graph to
-                                // avoid building up a large stack of destinations
-                                // on the back stack as users select items.
                                 popUpTo(navController.graph.startDestinationId) {
                                     saveState = true
                                 }
-                                // Avoid multiple copies of the same destination when
-                                // reselecting the same item.
                                 launchSingleTop = true
-                                // Restore state when reselecting a previously selected item.
                                 restoreState = true
                             }
                         }
@@ -118,7 +114,9 @@ fun MainScreen(
                 onNavigateToPlugins = { navController.navigate(Screen.Plugins.route) },
                 onNavigateToOpwngrid = { navController.navigate(Screen.Opwngrid.route) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onFetchLeaderboard = onFetchLeaderboard
+                onFetchLeaderboard = onFetchLeaderboard,
+                pwnagotchiViewModel = pwnagotchiViewModel,
+                settingsViewModel = settingsViewModel
             )
         }
     }
@@ -136,7 +134,9 @@ fun AppNavHost(
     onNavigateToPlugins: () -> Unit,
     onNavigateToOpwngrid: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    onFetchLeaderboard: () -> Unit
+    onFetchLeaderboard: () -> Unit,
+    pwnagotchiViewModel: PwnagotchiViewModel,
+    settingsViewModel: SettingsViewModel
 ) {
     NavHost(
         navController = navController as androidx.navigation.NavHostController,
@@ -164,13 +164,16 @@ fun AppNavHost(
             }
         }
         composable(Screen.Plugins.route) {
-            PluginsScreenNav(pwnagotchiUiState, onTogglePlugin, onInstallPlugin)
+            PluginsScreenNav(pwnagotchiViewModel, onTogglePlugin, onInstallPlugin)
         }
         composable(Screen.Opwngrid.route) {
             OpwngridScreenNav(pwnagotchiUiState, onFetchLeaderboard)
         }
         composable(Screen.Settings.route) {
-            SettingsScreenNav()
+             val settingsUiState by settingsViewModel.uiState.collectAsState()
+             SettingsScreen(uiState = settingsUiState, onSaveSettings = { host, apiKey, city, mode, theme, selectedInterface ->
+                 settingsViewModel.saveSettings(navController.context, host, apiKey, city, mode, theme, selectedInterface)
+             })
         }
     }
 }
