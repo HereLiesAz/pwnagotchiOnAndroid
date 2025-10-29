@@ -25,7 +25,8 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-    }
+    signingConfig = signingConfigs.getByName("debug")
+  }
 
     buildTypes {
         release {
@@ -60,6 +61,10 @@ android {
         }
     }
   buildToolsVersion = "36.1.0"
+  kotlinOptions {
+    jvmTarget = "17"
+  }
+  ndkVersion = "29.0.14206865"
 
   chaquopy {
         defaultConfig {

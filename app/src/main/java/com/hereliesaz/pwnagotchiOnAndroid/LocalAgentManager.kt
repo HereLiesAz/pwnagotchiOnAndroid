@@ -20,18 +20,18 @@ class LocalAgentManager(private val context: Context) {
     }
 
     fun hasNexmon(): Boolean {
-        val result = Shell.su("which nexutil").exec()
+        val result = Shell.cmd("which nexutil").exec()
         return result.isSuccess && result.out.isNotEmpty()
     }
 
     fun areBinariesInstalled(): Pair<Boolean, Boolean> {
-        val bettercapResult = Shell.su("which bettercap").exec()
-        val busyboxResult = Shell.su("which busybox").exec()
+        val bettercapResult = Shell.cmd("which bettercap").exec()
+        val busyboxResult = Shell.cmd("which busybox").exec()
         return Pair(bettercapResult.isSuccess, busyboxResult.isSuccess)
     }
 
     fun getWirelessInterfaces(): List<String> {
-        val result = Shell.su("$busyboxPath ifconfig -a").exec()
+        val result = Shell.cmd("$busyboxPath ifconfig -a").exec()
         if (result.isSuccess) {
             return result.out
                 .mapNotNull { line ->
@@ -52,11 +52,11 @@ class LocalAgentManager(private val context: Context) {
     private fun executeCommands(commands: List<Command>): Boolean {
         val successfulCommands = mutableListOf<Command>()
         for (command in commands) {
-            if (Shell.su(command.execute).exec().isSuccess) {
+            if (Shell.cmd(command.execute).exec().isSuccess) {
                 successfulCommands.add(command)
             } else {
                 // Rollback in reverse order
-                successfulCommands.reversed().forEach { Shell.su(it.rollback).exec() }
+                successfulCommands.reversed().forEach { Shell.cmd(it.rollback).exec() }
                 return false
             }
         }
@@ -86,15 +86,15 @@ class LocalAgentManager(private val context: Context) {
     fun startBettercap(iface: String): Shell.Result {
         val logFile = File(context.cacheDir, "bettercap.log").absolutePath
         val command = "$bettercapPath -iface $iface -debug -api-addr 127.0.0.1:8080 > $logFile 2>&1 &"
-        return Shell.su(command).exec()
+        return Shell.cmd(command).exec()
     }
 
     fun stopBettercap(): Shell.Result {
-        return Shell.su("$busyboxPath pkill bettercap").exec()
+        return Shell.cmd("$busyboxPath pkill bettercap").exec()
     }
 
     fun configureUsbNetwork(): Shell.Result {
-        return Shell.su(
+        return Shell.cmd(
             "svc usb setFunctions rndis",
             "ip link set dev rndis0 up",
             "ip addr add 10.0.0.1/24 dev rndis0"
