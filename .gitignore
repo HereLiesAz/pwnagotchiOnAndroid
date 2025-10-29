@@ -29,7 +29,7 @@ env.bak/
 venv.bak/
 
 # Android
-app/local.properties
+local.properties
 .gradle
 *.hprof
 

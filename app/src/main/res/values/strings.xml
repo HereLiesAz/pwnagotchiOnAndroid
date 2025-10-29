@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">pwnagotchi On Android</string>
+    <string name="app_name">pwnagotchi</string>
     <string name="pwnagotchi_ip">Pwnagotchi IP</string>
     <string name="theme">Theme</string>
     <string name="system">System</string>

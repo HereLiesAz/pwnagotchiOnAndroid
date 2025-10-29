@@ -80,7 +80,7 @@ fun MainScreen(
 
             AzNavRail {
                 azSettings(
-                    displayAppNameInHeader = true,
+                    displayAppNameInHeader = false,
                     packRailButtons = false,
                     isLoading = false,
                     defaultShape = AzButtonShape.RECTANGLE
