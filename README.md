@@ -2,7 +2,7 @@
 
 This project's goal is to create the ultimate Android application for Pwnagotchi enthusiasts. It is a "Super App" that can operate in three distinct modes, providing a comprehensive mobile solution for both interacting with and *becoming* a Pwnagotchi.
 
-## Project Goals
+## Features
 
 This application has three primary modes of operation:
 
@@ -20,7 +20,7 @@ In this mode, the app aims to turn a compatible, rooted Android device *into* a 
 -   **Full Pwnagotchi Experience:** Emulates the complete Pwnagotchi experience, including the character engine, UI, and background operation, all on your phone.
 
 ### 3. Hybrid Mode
-This mode provides a powerful alternative for users whose Android devices do not have a Nexmon-compatible Wi-Fi chipset but who still desire a portable, phone-driven experience. In this hybrid architecture, the Android phone acts as the "brain" and user interface, while a connected Raspberry Pi serves as a dedicated, headless wireless peripheral responsible for all hardware-level network interaction.
+This mode provides a powerful alternative for users whose Android devices do not have a Nexmon-compatible Wi-Fi chipset but who still desire a portable, phone-driven experience. In this hybrid architecture, the Android phone acts as the "brain" and user interface, while a connected Raspberry Pi serves as a dedicated, headless wireless peripheral responsible for all hardware-level network interaction. For more information, see the [Hybrid Mode Setup Guide](docs/hybrid_mode_setup.md).
 
 ## Requirements for Standalone Mode
 

@@ -20,6 +20,23 @@ Follow the official `bettercap` documentation to compile and install the latest 
 
 The `pwnagotchi_raspi` service automates the process of enabling monitor mode, running `bettercap`, and providing a secure WebSocket for the Android app.
 
+You have two options for installing the service:
+
+### Option A: Use the Pre-compiled Executable (Recommended)
+
+1.  **Download the latest `pwnagotchi_raspi` executable** from the project's releases page.
+2.  **Create the directory:**
+    ```bash
+    sudo mkdir -p /opt/pwnagotchi_raspi
+    ```
+3.  **Copy the executable** to the new directory and make it executable:
+    ```bash
+    sudo mv ./pwnagotchi_raspi /opt/pwnagotchi_raspi/
+    sudo chmod +x /opt/pwnagotchi_raspi/pwnagotchi_raspi
+    ```
+
+### Option B: Install from Source
+
 1.  **Clone the repository:**
     ```bash
     git clone https://github.com/HereLiesAz/Pwnagotchi-on-Android.git
@@ -35,19 +52,20 @@ The `pwnagotchi_raspi` service automates the process of enabling monitor mode, r
     sudo pip3 install -r requirements.txt
     ```
 
-4.  **Generate SSL Certificate:**
-    A self-signed SSL certificate is required for the secure WebSocket server. The following command will generate a certificate valid for one year.
-    ```bash
-    sudo openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes -subj "/C=US/ST=California/L=San Francisco/O=Pwnagotchi/OU=Pwnagotchi/CN=pwnagotchi.local"
-    ```
-
-5.  **Move the application to `/opt`:**
+4.  **Move the application to `/opt`:**
     ```bash
     sudo mv ../pwnagotchi_raspi /opt/
     ```
 
-6.  **Install and enable the `systemd` service:**
-    This will ensure the service starts automatically on boot.
+### Post-Installation Steps (Both Options)
+
+1.  **Generate SSL Certificate:**
+    A self-signed SSL certificate is required for the secure WebSocket server.
+    ```bash
+    sudo openssl req -x509 -newkey rsa:2048 -keyout /opt/pwnagotchi_raspi/key.pem -out /opt/pwnagotchi_raspi/cert.pem -days 365 -nodes -subj "/C=US/ST=California/L=San Francisco/O=Pwnagotchi/OU=Pwnagotchi/CN=pwnagotchi.local"
+    ```
+
+2.  **Install and enable the `systemd` service:**
     ```bash
     sudo cp /opt/pwnagotchi_raspi/pwnagotchi.service /etc/systemd/system/
     sudo systemctl enable pwnagotchi.service
