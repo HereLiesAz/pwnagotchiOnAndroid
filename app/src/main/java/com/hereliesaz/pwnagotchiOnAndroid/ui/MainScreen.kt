@@ -27,8 +27,15 @@ import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.OpwngridScreenNav
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.PluginsScreenNav
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.MissingDependenciesScreen
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.NotRootedScreen
-import com.hereliesaz.aznavrail.AzNavRail
-import com.hereliesaz.aznavrail.model.AzButtonShape
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.Wifi
 import com.hereliesaz.pwnagotchiOnAndroid.PwnagotchiViewModel
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.SettingsScreen
 
@@ -80,18 +87,10 @@ fun MainScreen(
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
 
-            AzNavRail {
-                azSettings(
-                    displayAppNameInHeader = false,
-                    packRailButtons = false,
-                    isLoading = false,
-                    defaultShape = AzButtonShape.RECTANGLE
-                )
+            NavigationRail {
                 items.forEach { screen ->
-                    azRailItem(
-                        id = screen.route,
-                        text = screen.route,
-                        color = if (currentRoute == screen.route) selectedColor else unselectedColor,
+                    NavigationRailItem(
+                        selected = currentRoute == screen.route,
                         onClick = {
                             navController.navigate(screen.route) {
                                 popUpTo(navController.graph.startDestinationId) {
@@ -100,7 +99,17 @@ fun MainScreen(
                                 launchSingleTop = true
                                 restoreState = true
                             }
-                        }
+                        },
+                        icon = {
+                            when (screen.route) {
+                                Screen.Home.route -> Icon(Icons.Filled.Home, contentDescription = "Home")
+                                Screen.Plugins.route -> Icon(Icons.Filled.Extension, contentDescription = "Plugins")
+                                Screen.Opwngrid.route -> Icon(Icons.Filled.Wifi, contentDescription = "Opwngrid")
+                                Screen.Settings.route -> Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                                else -> Icon(Icons.Filled.Home, contentDescription = "Home")
+                            }
+                        },
+                        label = { Text(screen.route) }
                     )
                 }
             }
@@ -170,7 +179,14 @@ fun AppNavHost(
             OpwngridScreenNav(pwnagotchiUiState, onFetchLeaderboard)
         }
         composable(Screen.Settings.route) {
-            SettingsScreen(settingsViewModel = settingsViewModel)
+            val settingsUiState by settingsViewModel.uiState.collectAsState()
+            val context = androidx.compose.ui.platform.LocalContext.current
+            SettingsScreen(
+                uiState = settingsUiState,
+                onSaveSettings = { host, apiKey, city, mode, theme, iface ->
+                    settingsViewModel.saveSettings(context, host, apiKey, city, mode, theme, iface)
+                }
+            )
         }
     }
 }
