@@ -1,6 +1,8 @@
 package com.hereliesaz.pwnagotchiOnAndroid
 
 import android.content.Context
+import com.chaquo.python.Python
+import com.chaquo.python.android.AndroidPlatform
 import com.topjohnwu.superuser.Shell
 import java.io.File
 import java.io.FileOutputStream
@@ -8,8 +10,11 @@ import java.io.IOException
 
 class LocalAgentManager(private val context: Context) {
 
-    private val bettercapPath = "bettercap"
-    private val busyboxPath = "busybox"
+    private val bettercapPath: String
+        get() = File(context.filesDir, "bettercap").absolutePath
+
+    private val busyboxPath: String
+        get() = File(context.filesDir, "busybox").absolutePath
 
     companion object {
         private const val WLAN_INTERFACE_PREFIX = "wlan"
@@ -38,10 +43,30 @@ class LocalAgentManager(private val context: Context) {
         return executeCommands(commands)
     }
 
+    fun extractAssets(): Boolean {
+        return try {
+            val assets = listOf("bettercap", "busybox")
+            assets.forEach { fileName ->
+                val file = File(context.filesDir, fileName)
+                // Always overwrite to ensure we have the latest version from the APK
+                context.assets.open(fileName).use { inputStream ->
+                    FileOutputStream(file).use { outputStream ->
+                        inputStream.copyTo(outputStream)
+                    }
+                }
+                Shell.cmd("chmod 755 ${file.absolutePath}").exec()
+            }
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
     fun areBinariesInstalled(): Pair<Boolean, Boolean> {
-        val bettercapResult = Shell.cmd("which bettercap").exec()
-        val busyboxResult = Shell.cmd("which busybox").exec()
-        return Pair(bettercapResult.isSuccess, busyboxResult.isSuccess)
+        val bettercapExists = File(bettercapPath).exists()
+        val busyboxExists = File(busyboxPath).exists()
+        return Pair(bettercapExists, busyboxExists)
     }
 
     fun getWirelessInterfaces(): List<String> {
@@ -107,11 +132,28 @@ class LocalAgentManager(private val context: Context) {
         return Shell.cmd("$busyboxPath pkill bettercap").exec()
     }
 
+    fun startPythonAi() {
+        if (!Python.isStarted()) {
+            Python.start(AndroidPlatform(context))
+        }
+        Thread {
+            try {
+                val python = Python.getInstance()
+                val aiModule = python.getModule("ai")
+                if (aiModule.containsKey("run")) {
+                    aiModule.callAttr("run")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }.start()
+    }
+
     fun configureUsbNetwork(): Shell.Result {
         return Shell.cmd(
             "svc usb setFunctions rndis",
             "ip link set dev rndis0 up",
-            "ip addr add 10.0.0.1/24 dev rndis0"
+            "ip addr add 10.0.0.2/24 dev rndis0"
         ).exec()
     }
 }
