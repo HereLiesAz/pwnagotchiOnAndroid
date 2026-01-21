@@ -48,12 +48,10 @@ class LocalAgentManager(private val context: Context) {
             val assets = listOf("bettercap", "busybox")
             assets.forEach { fileName ->
                 val file = File(context.filesDir, fileName)
-                // Check if exists to avoid overwriting every time, but could overwrite if needed.
-                if (!file.exists()) {
-                    context.assets.open(fileName).use { inputStream ->
-                        FileOutputStream(file).use { outputStream ->
-                            inputStream.copyTo(outputStream)
-                        }
+                // Always overwrite to ensure we have the latest version from the APK
+                context.assets.open(fileName).use { inputStream ->
+                    FileOutputStream(file).use { outputStream ->
+                        inputStream.copyTo(outputStream)
                     }
                 }
                 Shell.cmd("chmod 755 ${file.absolutePath}").exec()
