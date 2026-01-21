@@ -51,6 +51,12 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
+          if [ -z "$KEYSTORE_PRIVATE" ]; then
+            echo "Secrets missing. Skipping keystore generation."
+            echo "SIGNING_ENABLED=false" >> $GITHUB_ENV
+            exit 0
+          fi
+
           echo "Generating keystore from certificate chain and private key..."
 
           # Write the private key and certificate chain to temporary files
@@ -70,6 +76,7 @@ jobs:
             -alias "$KEY_ALIAS" -noprompt
 
           echo "Keystore generated successfully at app/keystore.jks"
+          echo "SIGNING_ENABLED=true" >> $GITHUB_ENV
 
           # Clean up temporary files
           rm private_key.pem certificate_chain.crt keystore.p12
@@ -98,12 +105,17 @@ jobs:
           set +e
           export BUILD_NUMBER=$(git rev-list --count HEAD)
           
-          # Build the APK
-          ./gradlew assembleDebug -PversionBuild=$BUILD_NUMBER --build-cache \
-            -Pandroid.injected.signing.store.file=$(pwd)/app/keystore.jks \
-            -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
-            -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
-            -Pandroid.injected.signing.key.password=$KEY_PASSWORD > build.log 2>&1
+          if [ "$SIGNING_ENABLED" == "true" ]; then
+             echo "Building signed APK..."
+             ./gradlew assembleDebug -PversionBuild=$BUILD_NUMBER --build-cache \
+               -Pandroid.injected.signing.store.file=$(pwd)/app/keystore.jks \
+               -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
+               -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
+               -Pandroid.injected.signing.key.password=$KEY_PASSWORD > build.log 2>&1
+          else
+             echo "Building default debug APK (unsigned/debug-signed)..."
+             ./gradlew assembleDebug -PversionBuild=$BUILD_NUMBER --build-cache > build.log 2>&1
+          fi
           
           EXIT_CODE=$?
           echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
@@ -155,29 +167,34 @@ jobs:
           export BUILD_NUMBER=$(git rev-list --count HEAD)
           
           # Extract version info from properties file
-          MAJOR=$(grep 'versionMajor=' version.properties | cut -d'=' -f2)
-          MINOR=$(grep 'versionMinor=' version.properties | cut -d'=' -f2)
+          if [ -f "version.properties" ]; then
+            MAJOR=$(grep 'versionMajor=' version.properties | cut -d'=' -f2)
+            MINOR=$(grep 'versionMinor=' version.properties | cut -d'=' -f2)
 
-          # Calculate Patch version programmatically based on commits since Minor update
-          MINOR_COMMIT=$(git blame -L '/versionMinor=/',+1 version.properties | awk '{print $1}' | tr -d '^')
-          if [ -n "$MINOR_COMMIT" ]; then
-            PATCH=$(git rev-list --count $MINOR_COMMIT..HEAD)
+            # Calculate Patch version programmatically based on commits since Minor update
+            # Fallback to file patch if git fails
+            MINOR_COMMIT=$(git blame -L '/versionMinor=/',+1 version.properties 2>/dev/null | awk '{print $1}' | tr -d '^')
+            if [ -n "$MINOR_COMMIT" ]; then
+              PATCH=$(git rev-list --count $MINOR_COMMIT..HEAD)
+            else
+              PATCH=$(grep 'versionPatch=' version.properties | cut -d'=' -f2)
+            fi
+            # Use defaults if empty
+            MAJOR=${MAJOR:-1}
+            MINOR=${MINOR:-0}
+            PATCH=${PATCH:-0}
           else
-            PATCH=$(grep 'versionPatch=' version.properties | cut -d'=' -f2)
+            MAJOR=1
+            MINOR=0
+            PATCH=$BUILD_NUMBER
           fi
 
           VERSION_NAME="$MAJOR.$MINOR.$PATCH.$BUILD_NUMBER"
           
           TAG_NAME="latest-debug-v${MAJOR}.${MINOR}"
           
-          # Dynamic App Name from settings.gradle
-          if [ -f "settings.gradle.kts" ]; then
-             APP_NAME=$(grep 'rootProject.name' settings.gradle.kts | sed -E "s/.*=.*[\"'](.*)[\"']/\1/")
-          elif [ -f "settings.gradle" ]; then
-             APP_NAME=$(grep 'rootProject.name' settings.gradle | sed -E "s/.*=.*[\"'](.*)[\"']/\1/")
-          else
-             APP_NAME="App"
-          fi
+          # Use fixed name as requested: pwnagotchi-a.b.c.d.apk
+          TARGET_NAME="pwnagotchi-${VERSION_NAME}.apk"
           
           # Locate built APK
           APK_ORIGINAL=$(find app/build/outputs/apk/debug -name "*.apk" | head -n 1)
@@ -186,8 +203,6 @@ jobs:
              echo "Error: No APK found to release!"
              exit 1
           fi
-
-          TARGET_NAME="${APP_NAME}-${VERSION_NAME}-debug.apk"
           
           # Rename for release
           mv "$APK_ORIGINAL" "$TARGET_NAME"
@@ -200,6 +215,16 @@ jobs:
           [ -d "app/src/main/assets/tools" ] && cp -r app/src/main/assets/tools/* build_tools_package/tools/ || true
           [ -d "app/src/main/jniLibs/arm64-v8a" ] && cp -r app/src/main/jniLibs/arm64-v8a/* build_tools_package/native/ || true
           cd build_tools_package && zip -r ../build-tools.zip . && cd ..
+
+      - name: Set up QEMU
+        if: success() && github.event_name == 'push'
+        uses: docker/setup-qemu-action@v2
+
+      - name: Build Raspi Executable (ARM)
+        if: success() && github.event_name == 'push'
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/work -w /work/pwnagotchi_raspi --platform linux/arm/v7 python:3.9-slim-buster \
+          bash -c "apt-get update && apt-get install -y binutils && pip install pyinstaller websockets && pyinstaller --onefile --name pwnagotchi_raspi main.py"
 
       - name: Publish Release
         if: success() && github.event_name == 'push'
@@ -214,22 +239,24 @@ jobs:
           git push origin $TAG_NAME --force
 
           BUILD_TOOLS="build-tools.zip"
+          RASPI_BIN="pwnagotchi_raspi/dist/pwnagotchi_raspi"
 
           # Check if release exists
           if gh release view $TAG_NAME > /dev/null 2>&1; then
              echo "Updating existing release..."
 
-             # Clean up ONLY the build-tools asset to avoid conflicts
+             # Clean up assets to avoid conflicts
              gh release delete-asset "$TAG_NAME" "$BUILD_TOOLS" -y || true
+             gh release delete-asset "$TAG_NAME" "pwnagotchi_raspi" -y || true
 
              gh release edit $TAG_NAME --prerelease \
                --title "Latest Debug Build ($TAG_NAME)" \
                --notes "Auto-build from commit $GITHUB_SHA" \
                --target $GITHUB_SHA
 
-             # Clobber ensures that if we re-run the workflow on the exact same commit, it replaces the APK instead of failing.
              gh release upload $TAG_NAME "$APK_FILE" --clobber
              [ -f "$BUILD_TOOLS" ] && gh release upload $TAG_NAME "$BUILD_TOOLS" --clobber
+             [ -f "$RASPI_BIN" ] && gh release upload $TAG_NAME "$RASPI_BIN" --clobber
           else
              echo "Creating new release..."
              gh release create $TAG_NAME "$APK_FILE" --prerelease \
@@ -237,4 +264,5 @@ jobs:
                --notes "Auto-build from commit $GITHUB_SHA" \
                --target $GITHUB_SHA
              [ -f "$BUILD_TOOLS" ] && gh release upload $TAG_NAME "$BUILD_TOOLS" --clobber
+             [ -f "$RASPI_BIN" ] && gh release upload $TAG_NAME "$RASPI_BIN" --clobber
           fi

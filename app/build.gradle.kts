@@ -99,6 +99,7 @@ dependencies {
     implementation("com.github.topjohnwu.libsu:core:6.0.0")
     implementation("com.google.accompanist:accompanist-permissions:0.37.3")
     implementation("org.jsoup:jsoup:1.21.2")
+    implementation("com.github.HereLiesAz:AzNavRail:6.15")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.mockito:mockito-core:5.20.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:6.1.0")

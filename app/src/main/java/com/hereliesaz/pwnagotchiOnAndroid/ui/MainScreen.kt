@@ -1,8 +1,8 @@
 package com.hereliesaz.pwnagotchiOnAndroid.ui
 
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -27,17 +27,15 @@ import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.OpwngridScreenNav
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.PluginsScreenNav
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.MissingDependenciesScreen
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.NotRootedScreen
-import androidx.compose.material3.NavigationRail
-import androidx.compose.material3.NavigationRailItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Extension
-import androidx.compose.material.icons.filled.Wifi
+import com.hereliesaz.aznavrail.AzNavRail
+import com.hereliesaz.aznavrail.AzNavHost
+import com.hereliesaz.aznavrail.model.AzButtonShape
+import com.hereliesaz.aznavrail.model.AzDockingSide
+import com.hereliesaz.aznavrail.model.AzHeaderIconShape
 import com.hereliesaz.pwnagotchiOnAndroid.PwnagotchiViewModel
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.SettingsScreen
+import androidx.compose.ui.res.stringResource
+import androidx.compose.material3.Icon
 
 @Composable
 fun MainScreen(
@@ -81,16 +79,33 @@ fun MainScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
-        Row(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            val selectedColor = MaterialTheme.colorScheme.primary
-            val unselectedColor = Color.Transparent
-            val navBackStackEntry by navController.currentBackStackEntryAsState()
-            val currentRoute = navBackStackEntry?.destination?.route
+        val selectedColor = MaterialTheme.colorScheme.primary
+        val unselectedColor = Color.Transparent
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        val currentRoute = navBackStackEntry?.destination?.route
 
-            NavigationRail {
-                items.forEach { screen ->
-                    NavigationRailItem(
-                        selected = currentRoute == screen.route,
+        Row(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            val itemConfigs = items.map { screen ->
+                Triple(
+                    screen,
+                    stringResource(screen.title),
+                    if (currentRoute == screen.route) selectedColor else unselectedColor
+                )
+            }
+
+            AzNavRail {
+                azSettings(
+                    displayAppNameInHeader = false,
+                    packRailButtons = false,
+                    isLoading = false,
+                    defaultShape = AzButtonShape.RECTANGLE
+                )
+
+                itemConfigs.forEach { (screen, title, color) ->
+                    azRailItem(
+                        id = screen.route,
+                        text = title,
+                        color = color,
                         onClick = {
                             navController.navigate(screen.route) {
                                 popUpTo(navController.graph.startDestinationId) {
@@ -99,20 +114,11 @@ fun MainScreen(
                                 launchSingleTop = true
                                 restoreState = true
                             }
-                        },
-                        icon = {
-                            when (screen.route) {
-                                Screen.Home.route -> Icon(Icons.Filled.Home, contentDescription = "Home")
-                                Screen.Plugins.route -> Icon(Icons.Filled.Extension, contentDescription = "Plugins")
-                                Screen.Opwngrid.route -> Icon(Icons.Filled.Wifi, contentDescription = "Opwngrid")
-                                Screen.Settings.route -> Icon(Icons.Filled.Settings, contentDescription = "Settings")
-                                else -> Icon(Icons.Filled.Home, contentDescription = "Home")
-                            }
-                        },
-                        label = { Text(screen.route) }
+                        }
                     )
                 }
             }
+
             AppNavHost(
                 navController = navController,
                 pwnagotchiUiState = pwnagotchiUiState,
@@ -130,7 +136,6 @@ fun MainScreen(
         }
     }
 }
-
 
 @Composable
 fun AppNavHost(
