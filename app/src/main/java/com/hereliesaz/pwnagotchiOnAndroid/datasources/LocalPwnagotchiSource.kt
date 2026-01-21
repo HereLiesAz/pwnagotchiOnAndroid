@@ -30,6 +30,12 @@ class LocalPwnagotchiSource(
     override fun connect(uri: URI) {
         currentUri = uri
         serviceScope.launch {
+            _uiState.value = PwnagotchiUiState.Connecting("Setting up environment...")
+            if (!localAgentManager.extractAssets()) {
+                _uiState.value = PwnagotchiUiState.Error("Failed to extract assets")
+                return@launch
+            }
+
             _uiState.value = PwnagotchiUiState.Connecting("Checking dependencies...")
             val (hasBettercap, hasBusybox) = localAgentManager.areBinariesInstalled()
             if (!hasBettercap || !hasBusybox) {
@@ -42,6 +48,9 @@ class LocalPwnagotchiSource(
                 // Give the system a moment to switch modes
                 delay(MODE_SWITCH_DELAY_MS)
                 if (localAgentManager.startBettercap(selectedInterface).isSuccess) {
+                    _uiState.value = PwnagotchiUiState.Connecting("Starting AI...")
+                    localAgentManager.startPythonAi()
+
                     // Give bettercap a moment to start its web UI
                     // TODO: Replace this with a more robust polling mechanism
                     delay(BETTERCAP_STARTUP_DELAY_MS)
