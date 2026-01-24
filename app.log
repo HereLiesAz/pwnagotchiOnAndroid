@@ -1,0 +1,16 @@
+2026-01-24 19:26:51,743 - INFO - Starting Pwnagotchi Service
+2026-01-24 19:26:51,744 - INFO - Starting Mock Bettercap from /app/linux_app/mock_bettercap.py
+2026-01-24 19:26:51,760 - INFO - SSL Certificates loaded.
+2026-01-24 19:26:51,760 - INFO - Starting Android Server on wss://0.0.0.0:8765
+2026-01-24 19:26:51,793 - WARNING - Bettercap connection lost/failed. Retrying in 5s...
+2026-01-24 19:26:51,793 - INFO - server listening on 0.0.0.0:8765
+2026-01-24 19:26:51,900 - INFO - [MOCK] server listening on 127.0.0.1:8080
+2026-01-24 19:26:51,900 - INFO - [MOCK] Mock Bettercap started on ws://127.0.0.1:8080
+2026-01-24 19:26:56,798 - INFO - [MOCK] connection open
+2026-01-24 19:26:56,798 - INFO - [MOCK] Client connected to Mock Bettercap
+2026-01-24 19:26:56,799 - INFO - [MOCK] Sent event: wifi.handshake
+2026-01-24 19:26:56,799 - INFO - Connected to Bettercap
+2026-01-24 19:26:56,800 - INFO - Handshake captured! {'ap_bssid': '00:00:00:00:00:00', 'station': '11:11:11:11:11:11', 'channel': 6}
+2026-01-24 19:27:01,517 - INFO - [MOCK] Sent event: wifi.handshake
+2026-01-24 19:27:01,517 - INFO - Handshake captured! {'ap_bssid': '00:00:00:00:00:00', 'station': '11:11:11:11:11:11', 'channel': 6}
+2026-01-24 19:27:05,392 - INFO - [MOCK] Sent event: wifi.ap.new
