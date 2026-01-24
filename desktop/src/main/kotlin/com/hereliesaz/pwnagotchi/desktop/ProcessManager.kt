@@ -16,6 +16,9 @@ object ProcessManager {
     private val mainScript = File(workDir, "main.py")
     private val venvDir = File(workDir, "venv")
 
+    // Allow overriding interface via system property or UI setting (future)
+    var targetInterface: String = "wlan0"
+
     private val isWindows = System.getProperty("os.name").lowercase().contains("win")
 
     private val pythonBin = if (isWindows)
@@ -97,7 +100,7 @@ object ProcessManager {
             // We don't control bettercap, but we can warn
             // runCommand(listOf("which", "bettercap"))
 
-            val pb = ProcessBuilder(pythonBin.absolutePath, mainScript.absolutePath)
+            val pb = ProcessBuilder(pythonBin.absolutePath, mainScript.absolutePath, "--iface", targetInterface)
             pb.directory(workDir)
             pb.redirectErrorStream(true)
             process = pb.start()

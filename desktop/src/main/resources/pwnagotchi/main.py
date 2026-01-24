@@ -10,9 +10,11 @@ import time
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+import argparse
+
 BETTERCAP_PATH = "bettercap" # rely on path
 WLAN_INTERFACE = "wlan0"
-WEBSOCKET_HOST = "127.0.0.1"
+WEBSOCKET_HOST = "0.0.0.0"
 WEBSOCKET_PORT = 8765
 
 bettercap_process = None
@@ -141,6 +143,13 @@ async def handle_client(websocket, path):
 
 async def main():
     """Main function to start the server."""
+    global WLAN_INTERFACE
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--iface", default="wlan0", help="Wireless interface to use")
+    args = parser.parse_args()
+    WLAN_INTERFACE = args.iface
+
     logging.info("Starting Pwnagotchi Desktop Backend...")
 
     # Try to start bettercap, but don't fail if it fails
@@ -148,7 +157,7 @@ async def main():
         logging.info("Bettercap running.")
         forwarder = asyncio.create_task(forward_bettercap_output())
     else:
-        logging.warning("Bettercap failed to start. Running in Blind mode.")
+        logging.warning("Bettercap failed to start (Root/Sudo required?). Running in Blind mode.")
 
     # Start WebSocket server (No SSL for local desktop app)
     async with websockets.serve(handle_client, WEBSOCKET_HOST, WEBSOCKET_PORT):

@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.Settings
+import com.hereliesaz.pwnagotchi.desktop.DiscoveryManager
 import com.hereliesaz.pwnagotchi.desktop.ProcessManager
 import com.hereliesaz.pwnagotchi.desktop.PwnagotchiClient
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +29,15 @@ fun MainScreen() {
                  processManager.install()
             }
             processManager.start()
+            DiscoveryManager.start()
             pwnagotchiClient.connect()
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            DiscoveryManager.stop()
+            processManager.stop()
         }
     }
 
