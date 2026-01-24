@@ -8,6 +8,10 @@ from collections import deque
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class PwnagotchiService:
+    """
+    Core service logic for Pwnagotchi Linux App.
+    Manages state, connection to Bettercap, and updates.
+    """
     def __init__(self, config=None, update_callback=None):
         self.config = config or {}
         self.update_callback = update_callback
@@ -28,6 +32,7 @@ class PwnagotchiService:
         self.start_time = 0
 
     async def start(self):
+        """Starts the service, connecting to Bettercap and starting the update loop."""
         self.running = True
         self.start_time = asyncio.get_running_loop().time()
         logging.info("Starting Pwnagotchi Service")
@@ -35,10 +40,12 @@ class PwnagotchiService:
         asyncio.create_task(self.update_loop())
 
     async def stop(self):
+        """Stops the service."""
         self.running = False
         logging.info("Stopping Pwnagotchi Service")
 
     async def connect_bettercap(self):
+        """Main loop for connecting to Bettercap's WebSocket."""
         while self.running:
             try:
                 async with websockets.connect(self.bettercap_url) as websocket:
@@ -59,6 +66,7 @@ class PwnagotchiService:
                     await asyncio.sleep(5)
 
     async def process_bettercap_event(self, event):
+        """Processes an event received from Bettercap."""
         tag = event.get('tag', '')
         data = event.get('data', {})
 
@@ -81,6 +89,7 @@ class PwnagotchiService:
         self.notify_update()
 
     async def update_loop(self):
+        """Periodic loop to update uptime and other time-based stats."""
         while self.running:
             # Update uptime
             try:
@@ -96,6 +105,7 @@ class PwnagotchiService:
             await asyncio.sleep(1)
 
     def notify_update(self):
+        """Calls the update callback with a copy of the current state."""
         if self.update_callback:
             # Pass a copy of the state to avoid race conditions if callback modifies it
             self.update_callback(self.state.copy())

@@ -7,6 +7,9 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - [MOCK] %(message)s')
 
 async def mock_events(websocket):
+    """
+    Handles WebSocket connections and simulates Bettercap events.
+    """
     logging.info("Client connected to Mock Bettercap")
     try:
         while True:
@@ -40,6 +43,9 @@ async def mock_events(websocket):
         logging.info("Client disconnected")
 
 async def main():
+    """
+    Starts the Mock Bettercap server.
+    """
     async with websockets.serve(mock_events, "127.0.0.1", 8080):
         logging.info("Mock Bettercap started on ws://127.0.0.1:8080")
         await asyncio.Future()  # Run forever

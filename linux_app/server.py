@@ -6,6 +6,9 @@ import websockets
 import os
 
 class AndroidServer:
+    """
+    Secure WebSocket server for connecting the Android app to the Linux Pwnagotchi.
+    """
     def __init__(self, service, host="0.0.0.0", port=8765):
         self.service = service
         self.host = host
@@ -14,6 +17,7 @@ class AndroidServer:
         self.server = None
 
     async def start(self):
+        """Starts the WebSocket server."""
         # SSL Setup
         cert_file = os.path.join(os.path.dirname(__file__), "cert.pem")
         key_file = os.path.join(os.path.dirname(__file__), "key.pem")
@@ -32,12 +36,14 @@ class AndroidServer:
         )
 
     async def stop(self):
+        """Stops the WebSocket server."""
         if self.server:
             self.server.close()
             await self.server.wait_closed()
             logging.info("Android Server stopped.")
 
     async def handle_client(self, websocket):
+        """Handles a new client connection."""
         logging.info("Android Client connected.")
         self.connected_clients.add(websocket)
         try:
@@ -63,6 +69,7 @@ class AndroidServer:
             logging.info("Android Client disconnected.")
 
     async def broadcast_state(self, state):
+        """Broadcasts the current state to all connected clients."""
         if not self.connected_clients:
             return
 
@@ -82,6 +89,7 @@ class AndroidServer:
         websockets.broadcast(self.connected_clients, json_message)
 
     async def send_state(self, websocket, state):
+        """Sends the current state to a specific client."""
         message = {
             "type": "ui_update",
             "data": {

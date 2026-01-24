@@ -22,6 +22,9 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def run_async_loop(loop, service, server):
+    """
+    Runs the asyncio event loop in a separate thread.
+    """
     asyncio.set_event_loop(loop)
     try:
         loop.run_until_complete(asyncio.gather(
@@ -33,6 +36,9 @@ def run_async_loop(loop, service, server):
         logging.error(f"Async loop error: {e}")
 
 def main():
+    """
+    Main entry point for the Pwnagotchi Linux App.
+    """
     parser = argparse.ArgumentParser(description="Pwnagotchi Linux App")
     parser.add_argument("--mock", action="store_true", help="Run with mock Bettercap")
     args = parser.parse_args()

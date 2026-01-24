@@ -20,6 +20,10 @@ FACES = {
 }
 
 class PwnagotchiWindow(QMainWindow):
+    """
+    Main GUI Window for the Pwnagotchi Linux App.
+    Displays the face and statistics.
+    """
     # Signal to receive updates from non-GUI thread
     update_signal = pyqtSignal(dict)
 
@@ -82,6 +86,7 @@ class PwnagotchiWindow(QMainWindow):
         self.update_signal.connect(self.update_ui)
 
     def update_ui(self, state):
+        """Updates the UI elements with the new state."""
         self.label_ch.setText(f"CH: {state.get('channel', '-')}")
         self.label_aps.setText(f"APS: {state.get('aps', 0)}")
         self.label_up.setText(f"UP: {state.get('uptime', '00:00:00')}")
