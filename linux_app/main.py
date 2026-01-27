@@ -8,15 +8,10 @@ import subprocess
 import os
 
 from PyQt6.QtWidgets import QApplication
-# Handle imports depending on how script is run
-try:
-    from .gui import PwnagotchiWindow
-    from .service import PwnagotchiService
-    from .server import AndroidServer
-except ImportError:
-    from linux_app.gui import PwnagotchiWindow
-    from linux_app.service import PwnagotchiService
-    from linux_app.server import AndroidServer
+
+from .gui import PwnagotchiWindow
+from .service import PwnagotchiService
+from .server import AndroidServer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

@@ -3,7 +3,12 @@ import json
 import logging
 import ssl
 import websockets
+from websockets import broadcast
 import os
+try:
+    from .plugin_manager import PluginManager
+except ImportError:
+    from linux_app.plugin_manager import PluginManager
 
 class AndroidServer:
     """
@@ -15,6 +20,7 @@ class AndroidServer:
         self.port = port
         self.connected_clients = set()
         self.server = None
+        self.plugin_manager = PluginManager()
 
     async def start(self):
         """Starts the WebSocket server."""
@@ -55,15 +61,52 @@ class AndroidServer:
                 try:
                     data = json.loads(message)
                     command = data.get("command")
+
                     if command == "list_plugins":
-                         # Mock response
+                         plugins = self.plugin_manager.get_plugins()
                          response = {
                              "type": "plugin_list",
-                             "data": []
+                             "data": plugins
                          }
                          await websocket.send(json.dumps(response))
+
+                    elif command == "toggle_plugin":
+                        name = data.get("plugin_name")
+                        enabled = data.get("enabled")
+                        if name is not None and enabled is not None:
+                            self.plugin_manager.toggle_plugin(name, enabled)
+                            # Refresh list for client
+                            plugins = self.plugin_manager.get_plugins()
+                            response = {
+                                "type": "plugin_list",
+                                "data": plugins
+                            }
+                            await websocket.send(json.dumps(response))
+
+                    elif command == "get_community_plugins":
+                        plugins = await self.plugin_manager.get_community_plugins()
+                        response = {
+                            "type": "community_plugin_list",
+                            "data": plugins
+                        }
+                        await websocket.send(json.dumps(response))
+
+                    elif command == "install_community_plugin":
+                        name = data.get("plugin_name")
+                        if name:
+                            await self.plugin_manager.install_plugin(name)
+                            # Refresh list
+                            plugins = self.plugin_manager.get_plugins()
+                            response = {
+                                "type": "plugin_list",
+                                "data": plugins
+                            }
+                            await websocket.send(json.dumps(response))
+
                 except json.JSONDecodeError:
                     pass
+                except Exception as e:
+                    logging.error(f"Error handling command: {e}")
         finally:
             self.connected_clients.remove(websocket)
             logging.info("Android Client disconnected.")
@@ -86,7 +129,7 @@ class AndroidServer:
         }
         json_message = json.dumps(message)
         # Broadcast to all connected clients
-        websockets.broadcast(self.connected_clients, json_message)
+        broadcast(self.connected_clients, json_message)
 
     async def send_state(self, websocket, state):
         """Sends the current state to a specific client."""
