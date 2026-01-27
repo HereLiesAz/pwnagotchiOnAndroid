@@ -36,6 +36,12 @@ import com.hereliesaz.pwnagotchiOnAndroid.PwnagotchiViewModel
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.SettingsScreen
 import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.filled.Settings
 
 @Composable
 fun MainScreen(
@@ -114,17 +120,7 @@ fun MainScreen(
                                 launchSingleTop = true
                                 restoreState = true
                             }
-                        },
-                        icon = {
-                            when (screen.route) {
-                                Screen.Home.route -> Icon(Icons.Filled.Home, contentDescription = "Home")
-                                Screen.Plugins.route -> Icon(Icons.Filled.Extension, contentDescription = "Plugins")
-                                Screen.Opwngrid.route -> Icon(Icons.Filled.Wifi, contentDescription = "Opwngrid")
-                                Screen.Settings.route -> Icon(Icons.Filled.Settings, contentDescription = "Settings")
-                                else -> Icon(Icons.Filled.Home, contentDescription = "Home")
-                            }
-                        },
-                        label = { Text(screen.route) }
+                        }
                     )
                 }
             }
