@@ -62,7 +62,7 @@ class PwnagotchiService:
                         try:
                             await self.process_bettercap_event(json.loads(message))
                         except json.JSONDecodeError:
-                            pass
+                            logging.warning(f"Failed to decode Bettercap event: {message}")
             except (websockets.exceptions.ConnectionClosed, ConnectionRefusedError, OSError):
                 if self.running:
                     logging.warning(
