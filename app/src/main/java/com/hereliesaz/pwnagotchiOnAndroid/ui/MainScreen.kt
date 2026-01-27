@@ -36,12 +36,6 @@ import com.hereliesaz.pwnagotchiOnAndroid.PwnagotchiViewModel
 import com.hereliesaz.pwnagotchiOnAndroid.ui.screens.SettingsScreen
 import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Extension
-import androidx.compose.material.icons.filled.Wifi
-import androidx.compose.material.icons.filled.Settings
 
 @Composable
 fun MainScreen(
