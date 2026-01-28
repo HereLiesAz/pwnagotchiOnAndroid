@@ -114,17 +114,7 @@ fun MainScreen(
                                 launchSingleTop = true
                                 restoreState = true
                             }
-                        },
-                        icon = {
-                            when (screen.route) {
-                                Screen.Home.route -> Icon(Icons.Filled.Home, contentDescription = "Home")
-                                Screen.Plugins.route -> Icon(Icons.Filled.Extension, contentDescription = "Plugins")
-                                Screen.Opwngrid.route -> Icon(Icons.Filled.Wifi, contentDescription = "Opwngrid")
-                                Screen.Settings.route -> Icon(Icons.Filled.Settings, contentDescription = "Settings")
-                                else -> Icon(Icons.Filled.Home, contentDescription = "Home")
-                            }
-                        },
-                        label = { Text(screen.route) }
+                        }
                     )
                 }
             }
