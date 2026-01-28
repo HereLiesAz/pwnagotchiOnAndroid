@@ -4,10 +4,7 @@ import logging
 import websockets
 from collections import deque
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 
 class PwnagotchiService:
@@ -42,21 +39,21 @@ class PwnagotchiService:
         """
         self.running = True
         self.start_time = asyncio.get_running_loop().time()
-        logging.info("Starting Pwnagotchi Service")
+        logger.info("Starting Pwnagotchi Service")
         asyncio.create_task(self.connect_bettercap())
         asyncio.create_task(self.update_loop())
 
     async def stop(self):
         """Stops the service."""
         self.running = False
-        logging.info("Stopping Pwnagotchi Service")
+        logger.info("Stopping Pwnagotchi Service")
 
     async def connect_bettercap(self):
         """Main loop for connecting to Bettercap's WebSocket."""
         while self.running:
             try:
                 async with websockets.connect(self.bettercap_url) as websocket:
-                    logging.info("Connected to Bettercap")
+                    logger.info("Connected to Bettercap")
                     self.state["face"] = "happy"
                     self.notify_update()
                     async for message in websocket:
@@ -70,7 +67,7 @@ class PwnagotchiService:
             except (websockets.exceptions.ConnectionClosed,
                     ConnectionRefusedError, OSError):
                 if self.running:
-                    logging.warning(
+                    logger.warning(
                         "Bettercap connection lost/failed. "
                         "Retrying in 5s...")
                     self.state["face"] = "sad"
@@ -92,7 +89,7 @@ class PwnagotchiService:
             self.state["shakes"] += 1
             self.state["face"] = "cool"
             self.state["recent_handshakes"].append(data)
-            logging.info(f"Handshake captured! {data}")
+            logger.info(f"Handshake captured! {data}")
 
         # Update channel if available
         if 'channel' in data:
@@ -113,7 +110,7 @@ class PwnagotchiService:
 
                 self.notify_update()
             except Exception as e:
-                logging.error(f"Error in update loop: {e}")
+                logger.error(f"Error in update loop: {e}")
             await asyncio.sleep(1)
 
     def notify_update(self):

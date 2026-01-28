@@ -2,18 +2,16 @@ import os
 import json
 import logging
 import aiohttp
+from pathlib import Path
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 
 class PluginManager:
-    def __init__(self, plugins_dir="linux_app/plugins",
-                 state_file="linux_app/plugins.json"):
-        self.plugins_dir = plugins_dir
-        self.state_file = state_file
+    def __init__(self, plugins_dir=None, state_file=None):
+        base_path = Path(__file__).parent
+        self.plugins_dir = plugins_dir or str(base_path / "plugins")
+        self.state_file = state_file or str(base_path / "plugins.json")
         self.plugins_state = self._load_state()
 
         if not os.path.exists(self.plugins_dir):
@@ -54,7 +52,7 @@ class PluginManager:
         if os.path.exists(os.path.join(self.plugins_dir, f"{safe_name}.py")):
             self.plugins_state[safe_name] = enabled
             self._save_state()
-            logging.info(f"Plugin {safe_name} toggled to {enabled}")
+            logger.info(f"Plugin {safe_name} toggled to {enabled}")
             return True
         return False
 
@@ -80,12 +78,12 @@ class PluginManager:
                                 })
                         return plugins
                     else:
-                        logging.error(
+                        logger.error(
                             f"Failed to fetch community plugins: "
                             f"{response.status}")
                         return []
         except Exception as e:
-            logging.error(f"Error fetching community plugins: {e}")
+            logger.error(f"Error fetching community plugins: {e}")
             return []
 
     async def install_plugin(self, name):
@@ -116,16 +114,16 @@ class PluginManager:
                             self.plugins_dir, f"{safe_name}.py")
                         with open(file_path, 'w') as f:
                             f.write(content)
-                        logging.info(
+                        logger.info(
                             f"Plugin {safe_name} installed from {file_url}")
                         return True
                     else:
                         # Try alternative: maybe it's just a file in the root?
                         # But get_community_plugins filtered for 'dir'.
-                        logging.error(
+                        logger.error(
                             f"Failed to download plugin {safe_name}: "
                             f"{response.status}")
                         return False
         except Exception as e:
-            logging.error(f"Failed to install plugin {safe_name}: {e}")
+            logger.error(f"Failed to install plugin {safe_name}: {e}")
             return False

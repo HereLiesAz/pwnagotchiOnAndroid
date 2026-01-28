@@ -39,6 +39,10 @@ def test_plugin_manager_toggle(plugin_manager):
     assert plugins[0]["enabled"] is True
 
 
+def test_plugin_manager_toggle_missing(plugin_manager):
+    assert plugin_manager.toggle_plugin("non_existent", True) is False
+
+
 @pytest.mark.asyncio
 async def test_get_community_plugins_success(plugin_manager):
     mock_response_data = [
@@ -74,6 +78,34 @@ async def test_get_community_plugins_success(plugin_manager):
 
 
 @pytest.mark.asyncio
+async def test_get_community_plugins_failure(plugin_manager):
+    mock_response = AsyncMock()
+    mock_response.status = 404
+
+    mock_context = AsyncMock()
+    mock_context.__aenter__.return_value = mock_response
+
+    mock_session = MagicMock()
+    mock_session.get.return_value = mock_context
+    mock_session.__aenter__.return_value = mock_session
+    mock_session.__aexit__.return_value = None
+
+    with patch("aiohttp.ClientSession") as mock_session_cls:
+        mock_session_cls.return_value = mock_session
+        plugins = await plugin_manager.get_community_plugins()
+
+    assert plugins == []
+
+
+@pytest.mark.asyncio
+async def test_get_community_plugins_exception(plugin_manager):
+    with patch("aiohttp.ClientSession") as mock_session_cls:
+        mock_session_cls.side_effect = Exception("Network error")
+        plugins = await plugin_manager.get_community_plugins()
+    assert plugins == []
+
+
+@pytest.mark.asyncio
 async def test_install_plugin_success(plugin_manager):
     mock_content = "print('installed')"
 
@@ -100,3 +132,27 @@ async def test_install_plugin_success(plugin_manager):
     assert os.path.exists(installed_path)
     with open(installed_path, "r") as f:
         assert f.read() == mock_content
+
+
+@pytest.mark.asyncio
+async def test_install_plugin_failure(plugin_manager):
+    mock_response = AsyncMock()
+    mock_response.status = 404
+
+    mock_context = AsyncMock()
+    mock_context.__aenter__.return_value = mock_response
+
+    mock_session = MagicMock()
+    mock_session.get.return_value = mock_context
+    mock_session.__aenter__.return_value = mock_session
+    mock_session.__aexit__.return_value = None
+
+    with patch("aiohttp.ClientSession") as mock_session_cls:
+        mock_session_cls.return_value = mock_session
+        success = await plugin_manager.install_plugin("bad_plugin")
+
+    assert success is False
+    assert not os.path.exists(
+        os.path.join(
+            plugin_manager.plugins_dir,
+            "bad_plugin.py"))

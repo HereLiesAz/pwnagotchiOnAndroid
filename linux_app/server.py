@@ -9,6 +9,8 @@ try:
 except ImportError:
     from linux_app.plugin_manager import PluginManager
 
+logger = logging.getLogger(__name__)
+
 
 class AndroidServer:
     """
@@ -26,10 +28,11 @@ class AndroidServer:
         self.api_key = api_key
         if not self.api_key:
             self.api_key = secrets.token_urlsafe(16)
-            logging.warning(
-                "No API key provided. Generated temporary API key.")
+            logger.warning(
+                f"No API key provided. Generated temporary key: "
+                f"{self.api_key}")
         else:
-            logging.info("Server configured with API key.")
+            logger.info(f"Server configured with API Key: {self.api_key}")
 
     async def start(self):
         """Starts the WebSocket server."""
@@ -41,13 +44,13 @@ class AndroidServer:
         if os.path.exists(cert_file) and os.path.exists(key_file):
             ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
             ssl_context.load_cert_chain(cert_file, key_file)
-            logging.info("SSL Certificates loaded.")
+            logger.info("SSL Certificates loaded.")
         else:
-            logging.warning(
+            logger.warning(
                 "SSL Certificates not found! Running in insecure mode.")
 
         scheme = "wss" if ssl_context else "ws"
-        logging.info(
+        logger.info(
             f"Starting Android Server on {scheme}://{self.host}:{self.port}")
 
         self.server = await websockets.serve(
@@ -59,7 +62,7 @@ class AndroidServer:
         if self.server:
             self.server.close()
             await self.server.wait_closed()
-            logging.info("Android Server stopped.")
+            logger.info("Android Server stopped.")
 
     async def handle_client(self, websocket):
         """Handles a new client connection with authentication."""
@@ -89,18 +92,18 @@ class AndroidServer:
                 authenticated = False
 
             if not authenticated:
-                logging.warning(
+                logger.warning(
                     f"Unauthorized connection attempt from "
                     f"{websocket.remote_address}")
                 await websocket.close(code=1008, reason="Unauthorized")
                 return
 
         except Exception as e:
-            logging.error(f"Authentication check failed: {e}")
+            logger.error(f"Authentication check failed: {e}")
             await websocket.close(code=1011, reason="Auth Error")
             return
 
-        logging.info(f"Android Client connected: {websocket.remote_address}")
+        logger.info(f"Android Client connected: {websocket.remote_address}")
         self.connected_clients.add(websocket)
         try:
             # Send initial state
@@ -155,12 +158,12 @@ class AndroidServer:
                             await websocket.send(json.dumps(response))
 
                 except json.JSONDecodeError:
-                    logging.warning(f"Received malformed JSON: {message}")
+                    logger.warning(f"Received malformed JSON: {message}")
                 except Exception as e:
-                    logging.error(f"Error handling command: {e}")
+                    logger.error(f"Error handling command: {e}")
         finally:
             self.connected_clients.remove(websocket)
-            logging.info("Android Client disconnected.")
+            logger.info("Android Client disconnected.")
 
     async def broadcast_state(self, state):
         """Broadcasts the current state to all connected clients."""

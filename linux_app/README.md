@@ -33,7 +33,7 @@ A fully functional Pwnagotchi client for Linux desktops (ARM64, ARM, AMD64, i386
 ## Usage
 
 1.  **Start Bettercap** (if using real hardware):
-    Ensure bettercap is running and its API is accessible at `127.0.0.1:8080`.
+    Ensure Bettercap is running and its API is accessible at `127.0.0.1:8080`.
 
 2.  **Run the App:**
     From the root of the repository:

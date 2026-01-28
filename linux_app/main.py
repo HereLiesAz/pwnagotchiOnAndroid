@@ -15,6 +15,8 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s')
 
+logger = logging.getLogger(__name__)
+
 
 def run_async_loop(loop, service, server):
     """
@@ -28,7 +30,7 @@ def run_async_loop(loop, service, server):
         ))
         loop.run_forever()
     except Exception as e:
-        logging.error(f"Async loop error: {e}")
+        logger.error(f"Async loop error: {e}")
 
 
 def main():

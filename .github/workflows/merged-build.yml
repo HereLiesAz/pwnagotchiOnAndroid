@@ -224,7 +224,7 @@ jobs:
         if: success() && github.event_name == 'push'
         run: |
           docker run --rm -v ${{ github.workspace }}:/work -w /work/pwnagotchi_raspi --platform linux/arm/v7 python:3.9-slim-bullseye \
-          bash -c "apt-get update && apt-get install -y binutils && pip install pyinstaller websockets && pyinstaller --onefile --name pwnagotchi_raspi main.py"
+          bash -c "apt-get update && apt-get install -y binutils gcc build-essential && pip install pyinstaller websockets && pyinstaller --onefile --name pwnagotchi_raspi main.py"
 
       - name: Publish Release
         if: success() && github.event_name == 'push'
