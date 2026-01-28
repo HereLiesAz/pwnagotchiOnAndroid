@@ -27,10 +27,9 @@ class AndroidServer:
         if not self.api_key:
             self.api_key = secrets.token_urlsafe(16)
             logging.warning(
-                f"No API key provided. Generated temporary key: "
-                f"{self.api_key}")
+                "No API key provided. Generated temporary API key.")
         else:
-            logging.info(f"Server configured with API Key: {self.api_key}")
+            logging.info("Server configured with API key.")
 
     async def start(self):
         """Starts the WebSocket server."""
