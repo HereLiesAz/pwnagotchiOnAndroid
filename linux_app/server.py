@@ -4,6 +4,7 @@ import ssl
 import websockets
 import os
 import secrets
+from urllib.parse import urlparse, parse_qs
 try:
     from .plugin_manager import PluginManager
 except ImportError:
@@ -83,13 +84,37 @@ class AndroidServer:
             request_path = getattr(websocket, 'path', '')
             request_headers = getattr(websocket, 'request_headers', {})
 
-            # Simple check: Query param ?key=API_KEY
-            if f"key={self.api_key}" in request_path:
-                authenticated = True
-            elif request_headers.get("Authorization") == self.api_key:
-                authenticated = True
-            else:
-                authenticated = False
+            authenticated = False
+
+            # Parse query parameters and require an exact ?key=<API_KEY> match
+            if request_path:
+                try:
+                    parsed = urlparse(request_path)
+                    query_params = parse_qs(parsed.query)
+                    key_values = query_params.get("key") or []
+                    if key_values and key_values[0] == self.api_key:
+                        authenticated = True
+                except Exception:
+                    logger.exception(
+                        "Failed to parse WebSocket request path for API key")
+
+            # Fallback: parse Authorization header with expected scheme
+            if not authenticated:
+                auth_header = request_headers.get("Authorization")
+                if auth_header:
+                    # Support standard "Bearer <token>" or raw token (legacy)
+                    if auth_header == self.api_key:
+                        authenticated = True
+                    else:
+                        scheme, _, credentials = auth_header.partition(" ")
+                        if (scheme.lower() == "bearer" and
+                                credentials == self.api_key):
+                            authenticated = True
+
+            logger.info(
+                "WebSocket authentication %s using configured API key",
+                "succeeded" if authenticated else "failed",
+            )
 
             if not authenticated:
                 logger.warning(

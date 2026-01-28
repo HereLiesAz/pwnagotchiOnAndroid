@@ -102,6 +102,10 @@ fun MainScreen(
                 )
 
                 itemConfigs.forEach { (screen, title, color) ->
+                    // AzNavRail v6.15 removed the 'icon' parameter from azRailItem.
+                    // The 'text' parameter is mandatory and will be displayed.
+                    // We ensure 'title' (derived from string resource) is used for 'text'
+                    // so the navigation items are not empty.
                     azRailItem(
                         id = screen.route,
                         text = title,

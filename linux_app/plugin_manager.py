@@ -89,41 +89,37 @@ class PluginManager:
     async def install_plugin(self, name):
         """
         Installs a community plugin by downloading it from the repo.
+        Attempts <name>/<name>.py first, then <name>.py.
         """
         safe_name = os.path.basename(name)
-        # Construct the raw content URL.
-        # Assuming the standard structure where the plugin file is inside a
-        # directory with the same name, or the file itself is name.py.
-        # The 'get_community_plugins' lists directories.
-        # Often plugins are: repo/plugin_name/plugin_name.py or just
-        # repo/plugin_name.py
-        # Based on pwnagotchi-plugins-contrib, it's usually a folder per
-        # plugin.
-
-        # We will try to fetch the file from the directory.
         base_url = ("https://raw.githubusercontent.com/"
                     "pwnagotchi-plugins-contrib/pwnagotchi-plugins/master")
-        file_url = f"{base_url}/{safe_name}/{safe_name}.py"
+
+        # Try both directory structure and flat file
+        candidate_urls = [
+            f"{base_url}/{safe_name}/{safe_name}.py",
+            f"{base_url}/{safe_name}.py"
+        ]
 
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(file_url) as response:
-                    if response.status == 200:
-                        content = await response.text()
-                        file_path = os.path.join(
-                            self.plugins_dir, f"{safe_name}.py")
-                        with open(file_path, 'w') as f:
-                            f.write(content)
-                        logger.info(
-                            f"Plugin {safe_name} installed from {file_url}")
-                        return True
-                    else:
-                        # Try alternative: maybe it's just a file in the root?
-                        # But get_community_plugins filtered for 'dir'.
-                        logger.error(
-                            f"Failed to download plugin {safe_name}: "
-                            f"{response.status}")
-                        return False
+                for file_url in candidate_urls:
+                    async with session.get(file_url) as response:
+                        if response.status == 200:
+                            content = await response.text()
+                            file_path = os.path.join(
+                                self.plugins_dir, f"{safe_name}.py")
+                            with open(file_path, 'w') as f:
+                                f.write(content)
+                            logger.info(
+                                f"Plugin {safe_name} installed from {file_url}")
+                            return True
+                        else:
+                            logger.debug(
+                                f"Failed to download from {file_url}: {response.status}")
+
+                logger.error(f"Failed to install plugin {safe_name}: Not found in repo")
+                return False
         except Exception as e:
             logger.error(f"Failed to install plugin {safe_name}: {e}")
             return False
