@@ -2,8 +2,8 @@ import json
 import logging
 import ssl
 import websockets
-from websockets import broadcast
 import os
+import secrets
 try:
     from .plugin_manager import PluginManager
 except ImportError:
@@ -12,16 +12,25 @@ except ImportError:
 
 class AndroidServer:
     """
-    Secure WebSocket server for connecting the Android app to the Linux Pwnagotchi.
+    Secure WebSocket server for connecting the Android app to the Linux
+    Pwnagotchi.
     """
 
-    def __init__(self, service, host="0.0.0.0", port=8765):
+    def __init__(self, service, host="0.0.0.0", port=8765, api_key=None):
         self.service = service
         self.host = host
         self.port = port
         self.connected_clients = set()
         self.server = None
         self.plugin_manager = PluginManager()
+        self.api_key = api_key
+        if not self.api_key:
+            self.api_key = secrets.token_urlsafe(16)
+            logging.warning(
+                f"No API key provided. Generated temporary key: "
+                f"{self.api_key}")
+        else:
+            logging.info(f"Server configured with API Key: {self.api_key}")
 
     async def start(self):
         """Starts the WebSocket server."""
@@ -38,8 +47,10 @@ class AndroidServer:
             logging.warning(
                 "SSL Certificates not found! Running in insecure mode.")
 
+        scheme = "wss" if ssl_context else "ws"
         logging.info(
-            f"Starting Android Server on wss://{self.host}:{self.port}")
+            f"Starting Android Server on {scheme}://{self.host}:{self.port}")
+
         self.server = await websockets.serve(
             self.handle_client, self.host, self.port, ssl=ssl_context
         )
@@ -52,8 +63,45 @@ class AndroidServer:
             logging.info("Android Server stopped.")
 
     async def handle_client(self, websocket):
-        """Handles a new client connection."""
-        logging.info("Android Client connected.")
+        """Handles a new client connection with authentication."""
+        # Check authentication
+        # We expect the API key in the 'Authorization' header or a query param
+        # 'key'
+        # Note: websockets library passes path and headers in handshake,
+        # but we are in the handler after handshake.
+        # However, for simplicity with this library structure, we can check
+        # the request headers if accessible or expect the first message to be
+        # an auth packet.
+
+        # Accessing headers in newer websockets versions:
+        try:
+            # Attempt to retrieve API Key from query params or headers
+            # Since 'websocket' object in handler typically exposes request
+            # info
+            request_path = getattr(websocket, 'path', '')
+            request_headers = getattr(websocket, 'request_headers', {})
+
+            # Simple check: Query param ?key=API_KEY
+            if f"key={self.api_key}" in request_path:
+                authenticated = True
+            elif request_headers.get("Authorization") == self.api_key:
+                authenticated = True
+            else:
+                authenticated = False
+
+            if not authenticated:
+                logging.warning(
+                    f"Unauthorized connection attempt from "
+                    f"{websocket.remote_address}")
+                await websocket.close(code=1008, reason="Unauthorized")
+                return
+
+        except Exception as e:
+            logging.error(f"Authentication check failed: {e}")
+            await websocket.close(code=1011, reason="Auth Error")
+            return
+
+        logging.info(f"Android Client connected: {websocket.remote_address}")
         self.connected_clients.add(websocket)
         try:
             # Send initial state
@@ -87,7 +135,8 @@ class AndroidServer:
                             await websocket.send(json.dumps(response))
 
                     elif command == "get_community_plugins":
-                        plugins = await self.plugin_manager.get_community_plugins()
+                        plugins = await (
+                            self.plugin_manager.get_community_plugins())
                         response = {
                             "type": "community_plugin_list",
                             "data": plugins
@@ -107,7 +156,7 @@ class AndroidServer:
                             await websocket.send(json.dumps(response))
 
                 except json.JSONDecodeError:
-                    pass
+                    logging.warning(f"Received malformed JSON: {message}")
                 except Exception as e:
                     logging.error(f"Error handling command: {e}")
         finally:
@@ -132,7 +181,7 @@ class AndroidServer:
         }
         json_message = json.dumps(message)
         # Broadcast to all connected clients
-        broadcast(self.connected_clients, json_message)
+        websockets.broadcast(self.connected_clients, json_message)
 
     async def send_state(self, websocket, state):
         """Sends the current state to a specific client."""

@@ -36,7 +36,10 @@ class PwnagotchiService:
         self.start_time = 0
 
     async def start(self):
-        """Starts the service, connecting to Bettercap and starting the update loop."""
+        """
+        Starts the service, connecting to Bettercap and starting the update
+        loop.
+        """
         self.running = True
         self.start_time = asyncio.get_running_loop().time()
         logging.info("Starting Pwnagotchi Service")
@@ -60,13 +63,16 @@ class PwnagotchiService:
                         if not self.running:
                             break
                         try:
-                            await self.process_bettercap_event(json.loads(message))
+                            await self.process_bettercap_event(
+                                json.loads(message))
                         except json.JSONDecodeError:
-                            logging.warning(f"Failed to decode Bettercap event: {message}")
-            except (websockets.exceptions.ConnectionClosed, ConnectionRefusedError, OSError):
+                            pass
+            except (websockets.exceptions.ConnectionClosed,
+                    ConnectionRefusedError, OSError):
                 if self.running:
                     logging.warning(
-                        "Bettercap connection lost/failed. Retrying in 5s...")
+                        "Bettercap connection lost/failed. "
+                        "Retrying in 5s...")
                     self.state["face"] = "sad"
                     self.notify_update()
                     await asyncio.sleep(5)

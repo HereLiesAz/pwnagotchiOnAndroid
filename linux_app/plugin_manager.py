@@ -63,7 +63,8 @@ class PluginManager:
         Fetches community plugins from the official repository.
         Returns a list of dicts: [{'name': '...', 'description': '...'}]
         """
-        url = "https://api.github.com/repos/pwnagotchi-plugins-contrib/pwnagotchi-plugins/contents/"
+        url = ("https://api.github.com/repos/pwnagotchi-plugins-contrib/"
+               "pwnagotchi-plugins/contents/")
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as response:
@@ -71,8 +72,8 @@ class PluginManager:
                         data = await response.json()
                         plugins = []
                         for item in data:
-                            if item['type'] == 'dir' and not item['name'].startswith(
-                                    '.'):
+                            if (item['type'] == 'dir' and
+                                    not item['name'].startswith('.')):
                                 plugins.append({
                                     "name": item['name'],
                                     "description": "Community Plugin"
@@ -80,8 +81,8 @@ class PluginManager:
                         return plugins
                     else:
                         logging.error(
-                            f"Failed to fetch community plugins: {
-                                response.status}")
+                            f"Failed to fetch community plugins: "
+                            f"{response.status}")
                         return []
         except Exception as e:
             logging.error(f"Error fetching community plugins: {e}")
@@ -93,14 +94,17 @@ class PluginManager:
         """
         safe_name = os.path.basename(name)
         # Construct the raw content URL.
-        # Assuming the standard structure where the plugin file is inside a directory with the same name,
-        # or the file itself is name.py. The 'get_community_plugins' lists directories.
-        # Often plugins are: repo/plugin_name/plugin_name.py or just repo/plugin_name.py
+        # Assuming the standard structure where the plugin file is inside a
+        # directory with the same name, or the file itself is name.py.
+        # The 'get_community_plugins' lists directories.
+        # Often plugins are: repo/plugin_name/plugin_name.py or just
+        # repo/plugin_name.py
         # Based on pwnagotchi-plugins-contrib, it's usually a folder per
         # plugin.
 
         # We will try to fetch the file from the directory.
-        base_url = "https://raw.githubusercontent.com/pwnagotchi-plugins-contrib/pwnagotchi-plugins/master"
+        base_url = ("https://raw.githubusercontent.com/"
+                    "pwnagotchi-plugins-contrib/pwnagotchi-plugins/master")
         file_url = f"{base_url}/{safe_name}/{safe_name}.py"
 
         try:
@@ -119,8 +123,8 @@ class PluginManager:
                         # Try alternative: maybe it's just a file in the root?
                         # But get_community_plugins filtered for 'dir'.
                         logging.error(
-                            f"Failed to download plugin {safe_name}: {
-                                response.status}")
+                            f"Failed to download plugin {safe_name}: "
+                            f"{response.status}")
                         return False
         except Exception as e:
             logging.error(f"Failed to install plugin {safe_name}: {e}")

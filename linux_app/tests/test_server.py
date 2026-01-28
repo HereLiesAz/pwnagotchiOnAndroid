@@ -40,7 +40,7 @@ async def test_server_broadcast():
         "mode": "AI"
     }
 
-    with patch("linux_app.server.broadcast") as mock_broadcast:
+    with patch("linux_app.server.websockets.broadcast") as mock_broadcast:
         await server.broadcast_state(state)
         mock_broadcast.assert_called_once()
         args, _ = mock_broadcast.call_args
@@ -55,10 +55,12 @@ async def test_server_broadcast():
 @pytest.mark.asyncio
 async def test_server_list_plugins(mock_plugin_manager):
     service = PwnagotchiService()
-    server = AndroidServer(service)
+    server = AndroidServer(service, api_key="test_key")
     server.plugin_manager = mock_plugin_manager  # Inject mock manager
 
     mock_ws = AsyncMock()
+    mock_ws.path = "/"
+    mock_ws.request_headers = {"Authorization": "test_key"}
     # Mock incoming messages
     mock_ws.__aiter__.return_value = [json.dumps({"command": "list_plugins"})]
 
@@ -74,16 +76,18 @@ async def test_server_list_plugins(mock_plugin_manager):
     assert plugin_response["type"] == "plugin_list"
     assert len(plugin_response["data"]) == 1
     assert plugin_response["data"][0]["name"] == "test_plugin"
-    assert plugin_response["data"][0]["enabled"] == False
+    assert plugin_response["data"][0]["enabled"] is False
 
 
 @pytest.mark.asyncio
 async def test_server_toggle_plugin(mock_plugin_manager):
     service = PwnagotchiService()
-    server = AndroidServer(service)
+    server = AndroidServer(service, api_key="test_key")
     server.plugin_manager = mock_plugin_manager
 
     mock_ws = AsyncMock()
+    mock_ws.path = "/"
+    mock_ws.request_headers = {"Authorization": "test_key"}
     mock_ws.__aiter__.return_value = [json.dumps({
         "command": "toggle_plugin",
         "plugin_name": "test_plugin",
@@ -94,10 +98,10 @@ async def test_server_toggle_plugin(mock_plugin_manager):
 
     # Check if state was updated in manager
     plugins = mock_plugin_manager.get_plugins()
-    assert plugins[0]["enabled"] == True
+    assert plugins[0]["enabled"] is True
 
     # Verify response contains updated list
     call_args_list = mock_ws.send.call_args_list
     plugin_response = json.loads(call_args_list[1][0][0])
     assert plugin_response["type"] == "plugin_list"
-    assert plugin_response["data"][0]["enabled"] == True
+    assert plugin_response["data"][0]["enabled"] is True
