@@ -1,0 +1,13 @@
+[Unit]
+Description=Pwnagotchi Raspberry Pi Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/pwnagotchi_raspi
+ExecStart=/usr/bin/python3 /opt/pwnagotchi_raspi/main.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
