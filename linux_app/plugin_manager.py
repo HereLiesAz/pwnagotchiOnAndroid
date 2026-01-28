@@ -112,13 +112,17 @@ class PluginManager:
                             with open(file_path, 'w') as f:
                                 f.write(content)
                             logger.info(
-                                f"Plugin {safe_name} installed from {file_url}")
+                                f"Plugin {safe_name} installed from "
+                                f"{file_url}")
                             return True
                         else:
                             logger.debug(
-                                f"Failed to download from {file_url}: {response.status}")
+                                f"Failed to download from {file_url}: "
+                                f"{response.status}")
 
-                logger.error(f"Failed to install plugin {safe_name}: Not found in repo")
+                logger.error(
+                    f"Failed to install plugin {safe_name}: "
+                    f"Not found in repo")
                 return False
         except Exception as e:
             logger.error(f"Failed to install plugin {safe_name}: {e}")

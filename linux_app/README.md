@@ -22,7 +22,13 @@ A fully functional Pwnagotchi client for Linux desktops (ARM64, ARM, AMD64, i386
     ```
     *Note: It is recommended to create a virtual environment.*
 
-2.  **Generate SSL Certificates:**
+2.  **Setup Binaries (Bettercap):**
+    Run the setup script to download and install the Bettercap binary for your architecture:
+    ```bash
+    bash linux_app/setup_dependencies.sh
+    ```
+
+3.  **Generate SSL Certificates:**
     The Android app requires a Secure WebSocket connection. Generate self-signed certificates in the `linux_app/` directory:
     ```bash
     cd linux_app

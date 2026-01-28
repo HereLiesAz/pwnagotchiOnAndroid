@@ -1,18 +1,18 @@
 import asyncio
 import logging
-import os
 import subprocess
 import websockets
 import json
-import random
 import time
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
 import argparse
 
-BETTERCAP_PATH = "bettercap" # rely on path
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+BETTERCAP_PATH = "bettercap"  # rely on path
 WLAN_INTERFACE = "wlan0"
 WEBSOCKET_HOST = "0.0.0.0"
 WEBSOCKET_PORT = 8765
@@ -33,9 +33,9 @@ state = {
 
 start_time = time.time()
 
+
 async def broadcast_state():
     """Broadcasts the current state to all connected clients."""
-    global state
     elapsed = int(time.time() - start_time)
     hours, rem = divmod(elapsed, 3600)
     minutes, seconds = divmod(rem, 60)
@@ -63,22 +63,30 @@ async def broadcast_state():
     if connected_clients:
         await websockets.broadcast(connected_clients, json.dumps(msg))
 
+
 async def loop_state_updates():
     while True:
         await broadcast_state()
         await asyncio.sleep(1)
+
 
 async def start_bettercap():
     """Starts the bettercap process and enables monitor mode."""
     global bettercap_process
     logging.info("Starting bettercap...")
     try:
-        # Check if we have sudo
-        # For desktop app running as user, sudo might prompt or fail.
-        # We try to run without sudo if possible, but bettercap needs it for packet capture.
-        # Here we assume user might have set capabilities or we just fail gracefully.
+        # Check if we have sudo For desktop app running as user,
+        # sudo might prompt or fail.
+        # We try to run without sudo if possible, but bettercap needs it for
+        # packet capture.
+        # Here we assume user might have set capabilities or we just fail
+        # gracefully.
+        # gracefully.
 
-        cmd = ["sudo", "-n", BETTERCAP_PATH, "-iface", WLAN_INTERFACE, "-caplet", "pwnagotchi-auto"]
+        cmd = [
+            "sudo", "-n", BETTERCAP_PATH, "-iface",
+            WLAN_INTERFACE, "-caplet", "pwnagotchi-auto"
+        ]
         # If -n fails, we might try without sudo?
 
         bettercap_process = await asyncio.create_subprocess_exec(
@@ -92,6 +100,7 @@ async def start_bettercap():
         logging.error(f"Failed to start bettercap: {e}")
         return False
 
+
 async def stop_bettercap():
     """Stops the bettercap process."""
     global bettercap_process
@@ -100,10 +109,11 @@ async def stop_bettercap():
         try:
             bettercap_process.terminate()
             await bettercap_process.wait()
-        except:
+        except BaseException:
             pass
         logging.info("Bettercap stopped.")
         bettercap_process = None
+
 
 async def forward_bettercap_output():
     """Reads bettercap's stdout and forwards it."""
@@ -112,14 +122,16 @@ async def forward_bettercap_output():
             line = await bettercap_process.stdout.readline()
             if line:
                 try:
-                    # If bettercap outputs JSON events (via caplet), we might parse them to update our state
-                    decoded = line.decode().strip()
+                    # If bettercap outputs JSON events (via caplet), we might
+                    # parse them to update our state
+                    line.decode().strip()
                     # For now just log
                     # logging.info(f"BC: {decoded}")
-                except:
+                except BaseException:
                     pass
         else:
             await asyncio.sleep(1)
+
 
 async def handle_client(websocket, path):
     """Handles WebSocket client connections."""
@@ -141,12 +153,16 @@ async def handle_client(websocket, path):
         logging.info("Client disconnected.")
         connected_clients.remove(websocket)
 
+
 async def main():
     """Main function to start the server."""
     global WLAN_INTERFACE
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--iface", default="wlan0", help="Wireless interface to use")
+    parser.add_argument(
+        "--iface",
+        default="wlan0",
+        help="Wireless interface to use")
     args = parser.parse_args()
     WLAN_INTERFACE = args.iface
 
@@ -155,19 +171,23 @@ async def main():
     # Try to start bettercap, but don't fail if it fails
     if await start_bettercap():
         logging.info("Bettercap running.")
-        forwarder = asyncio.create_task(forward_bettercap_output())
+        asyncio.create_task(forward_bettercap_output())
     else:
-        logging.warning("Bettercap failed to start (Root/Sudo required?). Running in Blind mode.")
+        logging.warning(
+            "Bettercap failed to start (Root/Sudo required?). "
+            "Running in Blind mode.")
 
     # Start WebSocket server (No SSL for local desktop app)
     async with websockets.serve(handle_client, WEBSOCKET_HOST, WEBSOCKET_PORT):
-        logging.info(f"WebSocket server started on ws://{WEBSOCKET_HOST}:{WEBSOCKET_PORT}")
+        logging.info(
+            f"WebSocket server started on "
+            f"ws://{WEBSOCKET_HOST}:{WEBSOCKET_PORT}")
 
         # Start state loop
         updater = asyncio.create_task(loop_state_updates())
 
         try:
-            await asyncio.Future() # Run forever
+            await asyncio.Future()  # Run forever
         finally:
             updater.cancel()
             await stop_bettercap()
