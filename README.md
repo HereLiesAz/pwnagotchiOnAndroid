@@ -30,6 +30,13 @@ To use the Standalone Mode, your Android device must meet the following requirem
 - **Busybox:** The `busybox` binary must be installed on your device. The recommended way to install it is through a Magisk module.
 - **Bettercap:** The `bettercap` binary must be installed. Please refer to the in-app instructions for guidance on how to install it.
 
+## Linux Desktop App
+
+This project also includes a standalone desktop application for Linux (ARM/x86).
+It provides a native Pwnagotchi GUI and can act as a host for the Android App in Remote Client Mode.
+
+See [linux_app/README.md](linux_app/README.md) for installation and usage instructions.
+
 <p align="center">
   <small>Join the project community on our server!</small>
   <br/><br/>
