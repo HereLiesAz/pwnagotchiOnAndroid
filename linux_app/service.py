@@ -5,13 +5,17 @@ import websockets
 from collections import deque
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 class PwnagotchiService:
     """
     Core service logic for Pwnagotchi Linux App.
     Manages state, connection to Bettercap, and updates.
     """
+
     def __init__(self, config=None, update_callback=None):
         self.config = config or {}
         self.update_callback = update_callback
@@ -26,13 +30,16 @@ class PwnagotchiService:
             "clients": 0,
             "uptime": "00:00:00",
             "shakes": 0,
-            "mode": "MANU", # MANU, AUTO, AI
+            "mode": "MANU",  # MANU, AUTO, AI
             "recent_handshakes": deque(maxlen=10)
         }
         self.start_time = 0
 
     async def start(self):
-        """Starts the service, connecting to Bettercap and starting the update loop."""
+        """
+        Starts the service, connecting to Bettercap and starting the update
+        loop.
+        """
         self.running = True
         self.start_time = asyncio.get_running_loop().time()
         logging.info("Starting Pwnagotchi Service")
@@ -53,14 +60,19 @@ class PwnagotchiService:
                     self.state["face"] = "happy"
                     self.notify_update()
                     async for message in websocket:
-                        if not self.running: break
+                        if not self.running:
+                            break
                         try:
-                            await self.process_bettercap_event(json.loads(message))
+                            await self.process_bettercap_event(
+                                json.loads(message))
                         except json.JSONDecodeError:
                             pass
-            except (websockets.exceptions.ConnectionClosed, ConnectionRefusedError, OSError):
+            except (websockets.exceptions.ConnectionClosed,
+                    ConnectionRefusedError, OSError):
                 if self.running:
-                    logging.warning("Bettercap connection lost/failed. Retrying in 5s...")
+                    logging.warning(
+                        "Bettercap connection lost/failed. "
+                        "Retrying in 5s...")
                     self.state["face"] = "sad"
                     self.notify_update()
                     await asyncio.sleep(5)
@@ -107,5 +119,6 @@ class PwnagotchiService:
     def notify_update(self):
         """Calls the update callback with a copy of the current state."""
         if self.update_callback:
-            # Pass a copy of the state to avoid race conditions if callback modifies it
+            # Pass a copy of the state to avoid race conditions if callback
+            # modifies it
             self.update_callback(self.state.copy())

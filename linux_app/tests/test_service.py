@@ -1,7 +1,7 @@
 import pytest
-import asyncio
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock
 from linux_app.service import PwnagotchiService
+
 
 @pytest.mark.asyncio
 async def test_service_initial_state():
@@ -9,6 +9,7 @@ async def test_service_initial_state():
     assert service.state["face"] == "neutral"
     assert service.state["aps"] == 0
     assert service.state["shakes"] == 0
+
 
 @pytest.mark.asyncio
 async def test_process_bettercap_event_ap():
@@ -22,6 +23,7 @@ async def test_process_bettercap_event_ap():
     assert service.state["face"] == "observing"
     assert service.state["channel"] == "6"
 
+
 @pytest.mark.asyncio
 async def test_process_bettercap_event_handshake():
     service = PwnagotchiService()
@@ -34,6 +36,7 @@ async def test_process_bettercap_event_handshake():
     assert service.state["face"] == "cool"
     assert service.state["channel"] == "11"
     assert len(service.state["recent_handshakes"]) == 1
+
 
 @pytest.mark.asyncio
 async def test_update_callback():

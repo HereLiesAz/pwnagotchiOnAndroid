@@ -41,12 +41,6 @@ A fully functional Pwnagotchi client for Linux desktops (ARM64, ARM, AMD64, i386
     python3 -m linux_app.main
     ```
 
-3.  **Mock Mode (Testing):**
-    To test the UI without Bettercap:
-    ```bash
-    python3 -m linux_app.main --mock
-    ```
-
 ## Connecting Android App
 
 1.  Open the Pwnagotchi Android App.

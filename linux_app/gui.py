@@ -19,6 +19,7 @@ FACES = {
     "debug": "(  #_# )"
 }
 
+
 class PwnagotchiWindow(QMainWindow):
     """
     Main GUI Window for the Pwnagotchi Linux App.
@@ -57,7 +58,7 @@ class PwnagotchiWindow(QMainWindow):
 
         # Remove last stretch
         if self.status_layout.count() > 0:
-            self.status_layout.takeAt(self.status_layout.count()-1)
+            self.status_layout.takeAt(self.status_layout.count() - 1)
 
         main_layout.addLayout(self.status_layout)
 
@@ -65,7 +66,7 @@ class PwnagotchiWindow(QMainWindow):
         self.label_face = QLabel(FACES["neutral"])
         self.label_face.setFont(self.font_face)
         self.label_face.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(self.label_face, 1) # Expandable
+        main_layout.addWidget(self.label_face, 1)  # Expandable
 
         # Status Line 2
         self.status_layout2 = QHBoxLayout()
@@ -78,7 +79,7 @@ class PwnagotchiWindow(QMainWindow):
             self.status_layout2.addStretch()
 
         if self.status_layout2.count() > 0:
-            self.status_layout2.takeAt(self.status_layout2.count()-1)
+            self.status_layout2.takeAt(self.status_layout2.count() - 1)
 
         main_layout.addLayout(self.status_layout2)
 

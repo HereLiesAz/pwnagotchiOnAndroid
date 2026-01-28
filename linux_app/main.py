@@ -1,11 +1,8 @@
 import sys
 import asyncio
 import threading
-import argparse
 import signal
 import logging
-import subprocess
-import os
 
 from PyQt6.QtWidgets import QApplication
 
@@ -14,7 +11,10 @@ from .service import PwnagotchiService
 from .server import AndroidServer
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 def run_async_loop(loop, service, server):
     """
@@ -30,14 +30,11 @@ def run_async_loop(loop, service, server):
     except Exception as e:
         logging.error(f"Async loop error: {e}")
 
+
 def main():
     """
     Main entry point for the Pwnagotchi Linux App.
     """
-    parser = argparse.ArgumentParser(description="Pwnagotchi Linux App")
-    parser.add_argument("--mock", action="store_true", help="Run with mock Bettercap")
-    args = parser.parse_args()
-
     app = QApplication(sys.argv)
     window = PwnagotchiWindow()
 
@@ -53,7 +50,8 @@ def main():
             loop = asyncio.get_running_loop()
             loop.create_task(server.broadcast_state(state))
         except RuntimeError:
-            # If called from outside the loop (shouldn't happen with current design)
+            # If called from outside the loop (shouldn't happen with current
+            # design)
             pass
 
     service.update_callback = combined_callback
@@ -62,17 +60,14 @@ def main():
     loop = asyncio.new_event_loop()
 
     # Run async loop in separate thread
-    t = threading.Thread(target=run_async_loop, args=(loop, service, server), daemon=True)
+    t = threading.Thread(
+        target=run_async_loop,
+        args=(
+            loop,
+            service,
+            server),
+        daemon=True)
     t.start()
-
-    if args.mock:
-        # Run the mock_bettercap.py script
-        mock_path = os.path.join(os.path.dirname(__file__), "mock_bettercap.py")
-        if os.path.exists(mock_path):
-            logging.info(f"Starting Mock Bettercap from {mock_path}")
-            subprocess.Popen([sys.executable, mock_path])
-        else:
-            logging.error("Mock Bettercap script not found!")
 
     window.show()
 
@@ -80,6 +75,7 @@ def main():
     signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()
