@@ -1,3 +1,5 @@
 PyQt6
 websockets
 aiohttp
+pytest
+pytest-asyncio
