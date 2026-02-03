@@ -1,0 +1,18 @@
+[submodule "bettercap"]
+	path = bettercap
+	url = https://github.com/bettercap/bettercap
+[submodule "libpcap"]
+	path = libpcap
+	url = https://github.com/the-tcpdump-group/libpcap
+[submodule "libpcap-android"]
+	path = libpcap-android
+	url = https://github.com/seladb/libpcap-android
+[submodule "libusb"]
+	path = libusb
+	url = https://github.com/libusb/libusb
+[submodule "platform_external_libpcap"]
+	path = platform_external_libpcap
+	url = https://android.googlesource.com/platform/external/libpcap
+[submodule "toybox"]
+	path = toybox
+	url = https://github.com/landley/toybox
