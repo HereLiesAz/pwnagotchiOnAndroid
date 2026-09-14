@@ -1,70 +1,25 @@
-# This workflow will upload a Python Package to PyPI when a release is created
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#publishing-to-package-registries
-
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-name: Upload Python Package
-
+# centralized-by: HereLiesAz/workflows
+# central-source-path: .github/workflows/python-publish.yml
+# central-source-sha256: 88d3deb6ad29f0d7955ad6e13f163fd2bfeeb9f91f7646cabe201571d80eac0a
+# This file intentionally contains no repository secrets.
+name: Upload Python Package [central proxy]
 on:
   release:
     types: [published]
-
 permissions:
   contents: read
-
+  id-token: write
 jobs:
-  release-build:
+  central-dispatch:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-
-      - name: Build release distributions
-        run: |
-          # NOTE: put your own distribution build steps here.
-          python -m pip install build
-          python -m build
-
-      - name: Upload distributions
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-dists
-          path: dist/
-
-  pypi-publish:
-    runs-on: ubuntu-latest
-    needs:
-      - release-build
-    permissions:
-      # IMPORTANT: this permission is mandatory for trusted publishing
-      id-token: write
-
-    # Dedicated environments with protections for publishing are strongly recommended.
-    # For more information, see: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#deployment-protection-rules
-    environment:
-      name: pypi
-      # OPTIONAL: uncomment and update to include your PyPI project URL in the deployment status:
-      # url: https://pypi.org/p/YOURPROJECT
-      #
-      # ALTERNATIVE: if your GitHub Release name is the PyPI project version string
-      # ALTERNATIVE: exactly, uncomment the following line instead:
-      # url: https://pypi.org/project/YOURPROJECT/${{ github.event.release.name }}
-
-    steps:
-      - name: Retrieve release distributions
-        uses: actions/download-artifact@v4
-        with:
-          name: release-dists
-          path: dist/
-
-      - name: Publish release distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: dist/
+      - name: Dispatch to HereLiesAz/workflows
+        env:
+          WORKFLOWS_GATEWAY_URL: ${{ vars.WORKFLOWS_GATEWAY_URL }}
+          EVENT_JSON: ${{ toJSON(github.event) }}
+          INPUTS_JSON: ${{ toJSON(inputs) }}
+          VARS_JSON: ${{ toJSON(vars) }}
+          SOURCE_WORKFLOW_PATH: .github/workflows/python-publish.yml
+          SOURCE_SHA256: 88d3deb6ad29f0d7955ad6e13f163fd2bfeeb9f91f7646cabe201571d80eac0a
+        shell: bash
+        run: "set -euo pipefail\n[[ -n \"${WORKFLOWS_GATEWAY_URL:-}\" ]] || { echo \"Repository variable WORKFLOWS_GATEWAY_URL is not configured.\" >&2; exit 1; }\noidc_response=\"$(curl --fail-with-body --silent --show-error -H \"Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}\" \"${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hereliesaz-workflows\")\"\noidc_token=\"$(jq -r '.value // empty' <<<\"$oidc_response\")\"\n[[ -n \"$oidc_token\" ]] || { echo \"GitHub did not issue an OIDC token.\" >&2; exit 1; }\necho \"::add-mask::$oidc_token\"\npayload=\"$(jq -n   --arg repository \"$GITHUB_REPOSITORY\" --arg repository_id \"$GITHUB_REPOSITORY_ID\"   --arg repository_owner \"$GITHUB_REPOSITORY_OWNER\" --arg repository_owner_id \"$GITHUB_REPOSITORY_OWNER_ID\"   --arg sha \"$GITHUB_SHA\" --arg ref \"$GITHUB_REF\" --arg ref_name \"$GITHUB_REF_NAME\" --arg ref_type \"$GITHUB_REF_TYPE\"   --arg head_ref \"$GITHUB_HEAD_REF\" --arg base_ref \"$GITHUB_BASE_REF\" --arg actor \"$GITHUB_ACTOR\" --arg actor_id \"$GITHUB_ACTOR_ID\"   --arg event_name \"$GITHUB_EVENT_NAME\" --arg run_id \"$GITHUB_RUN_ID\" --arg run_number \"$GITHUB_RUN_NUMBER\" --arg run_attempt \"$GITHUB_RUN_ATTEMPT\"   --arg workflow_ref \"$GITHUB_WORKFLOW_REF\" --arg workflow_name \"$GITHUB_WORKFLOW\" --arg source_workflow_path \"$SOURCE_WORKFLOW_PATH\"   --arg source_sha256 \"$SOURCE_SHA256\" --argjson event \"$EVENT_JSON\" --argjson inputs \"$INPUTS_JSON\" --argjson vars \"$VARS_JSON\"   '{repository:$repository,repository_id:$repository_id,repository_owner:$repository_owner,repository_owner_id:$repository_owner_id,sha:$sha,check_sha:($event.pull_request.head.sha // $sha),ref:$ref,ref_name:$ref_name,ref_type:$ref_type,head_ref:$head_ref,base_ref:$base_ref,actor:$actor,actor_id:$actor_id,event_name:$event_name,event:$event,inputs:$inputs,vars:$vars,run_id:$run_id,run_number:$run_number,run_attempt:$run_attempt,workflow_ref:$workflow_ref,workflow_name:$workflow_name,source_workflow_path:$source_workflow_path,source_sha256:$source_sha256}')\"\ncurl --fail-with-body --silent --show-error -X POST \"${WORKFLOWS_GATEWAY_URL%/}/dispatch\" -H \"Authorization: Bearer ${oidc_token}\" -H \"Content-Type: application/json\" --data-binary \"$payload\""
